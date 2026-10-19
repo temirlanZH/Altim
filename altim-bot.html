@@ -1,0 +1,750 @@
+<title>ALTIM AI — тестовый бот</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: липкая шапка с вкладками; бот — настройка слева и чат справа; прайс, CRM и реклама — широкие рабочие таблицы */
+:root{--bg:#F2F8FA;--surface:#FFFFFF;--surface2:#EAF3F6;--ink:#0E2A33;--muted:#5A7480;--line:#D5E4EA;--accent:#0089A6;--accent-ink:#FFFFFF;--gold:#D9A400;--bot:#E6F3F6;
+--good:#1C7C4E;--warn:#9A6400;--bad:#B3261E;--shadow:0 14px 44px rgba(14,42,51,.2);--scrim:rgba(8,28,34,.45);
+--f-body:Manrope,system-ui,-apple-system,"Segoe UI",sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B1A20;--surface:#12262E;--surface2:#0F2129;--ink:#E4F2F5;--muted:#8FAAB4;--line:#24414B;--accent:#3CC6E0;--accent-ink:#06222A;--gold:#F2C230;--bot:#183640;--good:#5FD39A;--warn:#F2C230;--bad:#F2A19B;--shadow:0 14px 44px rgba(0,0,0,.55);--scrim:rgba(0,0,0,.6);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0B1A20;--surface:#12262E;--surface2:#0F2129;--ink:#E4F2F5;--muted:#8FAAB4;--line:#24414B;--accent:#3CC6E0;--accent-ink:#06222A;--gold:#F2C230;--bot:#183640;--good:#5FD39A;--warn:#F2C230;--bad:#F2A19B;--shadow:0 14px 44px rgba(0,0,0,.55);--scrim:rgba(0,0,0,.6);color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-body)}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:clamp(22px,4vw,28px);font-weight:800}
+h2{font-size:18px;font-weight:700}
+h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+p{margin:0}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,tr:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* шапка */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:20px;padding-block:10px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:16px;letter-spacing:.02em;white-space:nowrap}
+.brand span{color:var(--gold)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}
+nav.tabs button{border:0;background:none;padding:8px 12px;border-radius:9px;font-weight:600;font-size:14px;color:var(--muted);white-space:nowrap;display:flex;gap:6px;align-items:center}
+nav.tabs button[aria-selected="true"]{background:var(--surface2);color:var(--ink)}
+nav.tabs .cnt{font-size:12px;background:var(--accent);color:var(--accent-ink);border-radius:99px;padding:0 7px;line-height:18px}
+.mode{font-size:12px;color:var(--muted);white-space:nowrap}
+
+.wrap{max-width:1180px;margin:0 auto;padding-block:24px 56px}
+.view{display:flex;flex-direction:column;gap:20px}
+.vhead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.vhead p{color:var(--muted);max-width:62ch;margin-top:6px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* формы */
+label{display:block;font-size:13px;font-weight:600;margin:12px 0 5px}
+input,textarea,select{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 11px;font-size:14px}
+textarea{min-height:72px;resize:vertical}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 13px;font-size:14px;font-weight:600;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{border-color:transparent;background:none;color:var(--muted)}
+.btn.danger{color:var(--bad)}
+.btn[disabled]{opacity:.5;cursor:default}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line);background:var(--surface);padding:7px 12px;border-radius:999px;font-size:13px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+/* чипы статусов: цвет несёт точка и фон, текст — всегда чернилами */
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--surface2);white-space:nowrap}
+.chip::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.chip.acc{background:color-mix(in srgb,var(--accent) 14%,transparent)}.chip.acc::before{background:var(--accent)}
+.chip.good{background:color-mix(in srgb,var(--good) 15%,transparent)}.chip.good::before{background:var(--good)}
+.chip.warn{background:color-mix(in srgb,var(--warn) 16%,transparent)}.chip.warn::before{background:var(--warn)}
+.chip.bad{background:color-mix(in srgb,var(--bad) 15%,transparent)}.chip.bad::before{background:var(--bad)}
+.tag{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:0 6px}
+
+/* бот */
+.bot-grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:880px){.bot-grid{grid-template-columns:minmax(0,1fr)}}
+.pricebox{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface2);font-size:13px}
+.pricebox b{font-size:14px}
+.pricebox ul{margin:6px 0 0;padding-left:18px;color:var(--muted)}
+.chat{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;min-width:0}
+.chat .head{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.chat .head b{display:block}
+.stage{font-size:12px}
+.log{padding:16px;display:flex;flex-direction:column;gap:9px;min-height:380px;max-height:62vh;overflow-y:auto}
+.m{max-width:85%;padding:9px 13px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.m.bot{background:var(--bot);align-self:flex-start;border-bottom-left-radius:4px}
+.m.me{background:var(--accent);color:var(--accent-ink);align-self:flex-end;border-bottom-right-radius:4px}
+.m.err{background:none;border:1px dashed var(--bad);color:var(--ink)}
+.dots{display:inline-flex;gap:4px;padding:4px 0}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:b 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,60%,100%{opacity:.3}30%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.dots i{animation:none;opacity:.6}}
+.sys{align-self:stretch;border:1px solid color-mix(in srgb,var(--good) 45%,var(--line));background:color-mix(in srgb,var(--good) 9%,var(--surface));border-radius:12px;padding:11px 13px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px}
+.sys b{display:block}
+.quick{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 10px}
+.quick button{border:1px dashed var(--line);background:none;border-radius:999px;padding:5px 11px;font-size:13px}
+.send{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.send input{flex:1;min-width:0}
+.note{color:var(--muted);font-size:13px;padding:0 16px 12px}
+
+/* таблицы */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font-size:12px;font-weight:700;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface2)}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tbody tr.click{cursor:pointer}
+tbody tr.click:hover{background:var(--surface2)}
+.ptable{min-width:720px}
+.ptable td{padding:5px 6px}
+.ptable input{border-color:transparent;background:transparent;padding:7px 8px}
+.ptable input:hover,.ptable input:focus{border-color:var(--line);background:var(--surface)}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+
+/* метрики */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.stat{background:var(--surface);padding:13px 15px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat .k{font-size:12px;font-weight:600;color:var(--muted)}
+.stat .v{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat .s{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* график CPL */
+.bars{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.bar-row{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:12px;align-items:center}
+.bar-row .lbl{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track{position:relative;height:22px}
+.fill{position:absolute;left:0;top:3px;bottom:3px;background:var(--accent);border-radius:0 4px 4px 0;min-width:2px}
+.fill.over{background:var(--bad)}
+.track .val{position:absolute;top:0;line-height:22px;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;padding-left:6px;white-space:nowrap}
+.target{position:absolute;top:-4px;bottom:-4px;border-left:2px dashed var(--gold)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+@media (max-width:560px){.bar-row{grid-template-columns:minmax(0,1fr);gap:2px}}
+#tip{position:fixed;z-index:40;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;padding:7px 10px;border-radius:8px;max-width:260px;line-height:1.45}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:880px){.two{grid-template-columns:minmax(0,1fr)}}
+.report{display:flex;flex-direction:column;gap:14px}
+.report ul{margin:0;padding-left:18px}
+.report li+li{margin-top:4px}
+
+/* карточка лида */
+#scrim{position:fixed;inset:0;background:var(--scrim);z-index:30}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(600px,100%);background:var(--bg);box-shadow:var(--shadow);z-index:31;overflow-y:auto;overscroll-behavior:contain;
+ padding:calc(env(safe-area-inset-top,0px) + 16px) max(18px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 32px) 18px}
+.card{display:flex;flex-direction:column;gap:14px}
+.card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.card-head h2{font-size:22px}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 16px;font-size:14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;overflow-wrap:anywhere}
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.sec ul{margin:0;padding-left:18px}
+.sec li+li{margin-top:3px}
+.score{display:flex;align-items:center;gap:10px}
+.meter{flex:1;height:8px;border-radius:99px;background:var(--surface2);overflow:hidden;min-width:80px}
+.meter b{display:block;height:100%;background:var(--accent);border-radius:99px}
+.obj{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:3px}
+.obj:first-of-type{border-top:0;padding-top:0}
+.script{white-space:pre-wrap;background:var(--surface2);border-radius:9px;padding:10px 12px;font-size:14px}
+.hist{font-size:13px;display:flex;flex-direction:column;gap:4px}
+.tx{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.tx .m{font-size:13px;max-width:92%}
+details summary{cursor:pointer;font-weight:700}
+.skel{height:12px;border-radius:6px;background:var(--surface2)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:50;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;max-width:calc(100% - 32px)}
+.dirty{font-size:13px;color:var(--warn);font-weight:600}
+</style>
+
+<header class="top"><div class="top-in gut">
+ <div class="brand">ALTIM <span>AI</span></div>
+ <nav class="tabs" role="tablist" aria-label="Разделы">
+  <button role="tab" data-tab="bot" aria-selected="true">Тест-бот</button>
+  <button role="tab" data-tab="prices" aria-selected="false">Прайс-лист <span class="cnt" id="cnt-prices">0</span></button>
+  <button role="tab" data-tab="crm" aria-selected="false">CRM <span class="cnt" id="cnt-crm" hidden>0</span></button>
+  <button role="tab" data-tab="ads" aria-selected="false">Реклама</button>
+ </nav>
+ <div class="mode" id="mode">Подключаем данные…</div>
+ <a class="mode" href="https://claude.ai/artifact/EvAyQUhmzgoaXqRfmANFno" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700;text-decoration:none">Сайт ALTIM ↗</a>
+</div></header>
+
+<main class="wrap gut">
+
+<!-- ТЕСТ-БОТ -->
+<section class="view" id="v-bot">
+ <div class="vhead"><div><h1>Проверьте, как ИИ-менеджер продаёт за ваш бизнес</h1><p>Бот отвечает по вашему прайс-листу, доводит клиента до записи и сам заводит карточку лида в CRM. После записи он только подтверждает детали и больше ничего не спрашивает.</p></div></div>
+ <div class="bot-grid">
+  <div class="panel">
+   <div class="seg" role="group" aria-label="Ниша" id="niches">
+    <button data-n="clinic" aria-pressed="true">Клиника</button>
+    <button data-n="goods" aria-pressed="false">Товары и БАДы</button>
+    <button data-n="school" aria-pressed="false">Онлайн-школа</button>
+   </div>
+   <label for="f-name">Название компании</label><input id="f-name">
+   <label for="f-mgr">Имя менеджера в чате</label><input id="f-mgr">
+   <label for="f-info" id="l-info">Адрес, график, условия</label><textarea id="f-info"></textarea>
+   <label for="f-source">Откуда пришёл клиент</label>
+   <select id="f-source"></select>
+   <div class="pricebox" id="pricebox"></div>
+   <button class="btn pri" id="start" style="width:100%;margin-top:16px;padding:12px">Начать новый диалог</button>
+  </div>
+  <div class="chat" id="chat">
+   <div class="head"><div><b id="c-name"></b><span class="stage muted" id="c-stage">ИИ-менеджер · тест</span></div><span class="chip" id="c-chip">Идёт диалог</span></div>
+   <div class="log" id="log" aria-live="polite"></div>
+   <div class="quick" id="quick"></div>
+   <form class="send" id="send"><input id="msg" placeholder="Напишите как клиент…" autocomplete="off"><button class="btn pri">Отправить</button></form>
+   <div class="note" id="note">Тестовый режим: до 30 сообщений в диалоге.</div>
+  </div>
+ </div>
+</section>
+
+<!-- ПРАЙС-ЛИСТ -->
+<section class="view" id="v-prices" hidden>
+ <div class="vhead">
+  <div><h1>Прайс-лист компании</h1><p>Бот называет цены только из этой таблицы. Загрузите свой прайс файлом, вставьте текстом или заполните вручную, затем сохраните.</p></div>
+  <div class="row"><span class="dirty" id="p-dirty" hidden>Есть несохранённые изменения</span><button class="btn" id="p-preset">Шаблон ниши</button><button class="btn pri" id="p-save">Сохранить прайс</button></div>
+ </div>
+ <div class="panel">
+  <h2>Загрузить прайс</h2>
+  <p class="muted small" style="margin-top:4px">Excel (.xlsx), CSV или текст. Подойдёт копия из Google Таблиц, Word или с сайта: «Услуга — цена» на каждой строке.</p>
+  <label for="p-paste">Вставьте прайс</label>
+  <textarea id="p-paste" placeholder="Приём кардиолога — 12 000 ₸&#10;УЗИ щитовидной железы	7 000 ₸	результат сразу&#10;Check-up «Сердце»; 35 000 ₸; ЭКГ, УЗИ сердца, анализы"></textarea>
+  <div class="row" style="margin-top:10px">
+   <label class="btn" for="p-file" style="margin:0">Выбрать файл</label><input type="file" id="p-file" accept=".xlsx,.xls,.csv,.tsv,.txt" hidden>
+   <select id="p-merge" style="width:auto"><option value="replace">Заменить прайс</option><option value="add">Добавить к прайсу</option></select>
+   <button class="btn pri" id="p-parse">Разобрать</button>
+   <button class="btn" id="p-ai">Распознать с ИИ</button>
+   <span class="muted small" id="p-msg"></span>
+  </div>
+ </div>
+ <div class="tbl"><table class="ptable"><thead><tr><th style="width:22%">Категория</th><th style="width:34%">Услуга или товар</th><th style="width:16%">Цена</th><th>Что входит, условия</th><th></th></tr></thead><tbody id="p-body"></tbody></table></div>
+ <div class="row"><button class="btn" id="p-addrow">+ Позиция</button><button class="btn ghost" id="p-test">Проверить в чате →</button></div>
+</section>
+
+<!-- CRM -->
+<section class="view" id="v-crm" hidden>
+ <div class="vhead">
+  <div><h1>Лиды</h1><p>Каждую запись бот превращает в карточку: потребность, возражения, допродажи из прайса и скрипт звонка. Откройте строку, чтобы вести клиента дальше.</p></div>
+  <button class="btn pri" id="crm-add">+ Лид вручную</button>
+ </div>
+ <div class="stats" id="crm-stats"></div>
+ <div class="row" style="justify-content:space-between">
+  <div class="seg" id="crm-filter" role="group" aria-label="Статус"></div>
+  <input id="crm-q" placeholder="Поиск по имени, телефону, услуге" style="max-width:300px">
+ </div>
+ <div class="tbl"><table style="min-width:880px"><thead><tr><th>Создан</th><th>Клиент</th><th>Услуга</th><th>Запись на</th><th>Источник</th><th>Лид</th><th>Статус</th><th class="r">Сумма</th></tr></thead><tbody id="crm-body"></tbody></table></div>
+</section>
+
+<!-- РЕКЛАМА -->
+<section class="view" id="v-ads" hidden>
+ <div class="vhead">
+  <div><h1>Таргетированная реклама</h1><p>Загрузите выгрузку из Meta Ads, TikTok, Google Ads или 2GIS. Дашборд посчитает стоимость лида и окупаемость, сверит с лидами из CRM и подготовит разбор с рекомендациями.</p></div>
+  <div class="row"><label for="ad-target" style="margin:0" class="small">Целевая цена лида, ₸</label><input id="ad-target" class="num" inputmode="numeric" style="width:110px"><button class="btn" id="ad-imp-toggle">Загрузить отчёт</button><button class="btn pri" id="ad-ai">Разбор от ИИ</button></div>
+ </div>
+ <div class="panel" id="ad-imp" hidden>
+  <div class="two">
+   <div>
+    <h2>Импорт отчёта</h2>
+    <p class="muted small" style="margin-top:4px">Файл .xlsx или .csv из кабинета либо таблица, скопированная оттуда. Колонки определяются автоматически: кампания, расход, показы, клики, лиды, продажи, выручка.</p>
+    <label for="ad-paste">Вставьте таблицу</label><textarea id="ad-paste" style="min-height:110px"></textarea>
+    <div class="row" style="margin-top:10px">
+     <label class="btn" for="ad-file" style="margin:0">Выбрать файл</label><input type="file" id="ad-file" accept=".xlsx,.xls,.csv,.tsv,.txt" hidden>
+     <select id="ad-plat" style="width:auto"></select>
+     <button class="btn pri" id="ad-parse">Разобрать</button><button class="btn" id="ad-parse-ai">Распознать с ИИ</button>
+    </div>
+    <p class="muted small" id="ad-msg" style="margin-top:8px"></p>
+   </div>
+   <div>
+    <h2>Добавить кампанию вручную</h2>
+    <div class="two" style="gap:0 12px">
+     <div><label for="am-plat">Площадка</label><select id="am-plat"></select></div>
+     <div><label for="am-period">Период</label><input id="am-period" placeholder="01.10–15.10"></div>
+    </div>
+    <label for="am-name">Кампания</label><input id="am-name">
+    <div class="two" style="gap:0 12px;grid-template-columns:repeat(3,minmax(0,1fr))">
+     <div><label for="am-spend">Расход, ₸</label><input id="am-spend" inputmode="numeric"></div>
+     <div><label for="am-imp">Показы</label><input id="am-imp" inputmode="numeric"></div>
+     <div><label for="am-clk">Клики</label><input id="am-clk" inputmode="numeric"></div>
+     <div><label for="am-leads">Лиды</label><input id="am-leads" inputmode="numeric"></div>
+     <div><label for="am-sales">Продажи</label><input id="am-sales" inputmode="numeric"></div>
+     <div><label for="am-rev">Выручка, ₸</label><input id="am-rev" inputmode="numeric"></div>
+    </div>
+    <button class="btn pri" id="am-add" style="margin-top:12px">Добавить кампанию</button>
+   </div>
+  </div>
+ </div>
+ <div class="seg" id="ad-filter" role="group" aria-label="Площадка"></div>
+ <div class="stats" id="ad-stats"></div>
+ <div class="two">
+  <div class="panel"><h2>Цена лида по кампаниям</h2><p class="muted small" style="margin-top:4px">Пунктир — целевая цена лида</p><div class="bars" id="ad-bars"></div>
+   <div class="legend"><span><i style="background:var(--accent)"></i>в пределах цели</span><span><i style="background:var(--bad)"></i>дороже цели</span></div></div>
+  <div class="panel"><h2>Лиды из CRM по источникам</h2><p class="muted small" style="margin-top:4px">Что реально дошло до записи и оплаты</p><div class="tbl" style="margin-top:12px;border:0"><table><thead><tr><th>Источник</th><th class="r">Лиды</th><th class="r">Записаны</th><th class="r">Оплатили</th><th class="r">Сумма</th></tr></thead><tbody id="ad-src"></tbody></table></div></div>
+ </div>
+ <div class="tbl"><table style="min-width:1020px"><thead><tr><th>Площадка</th><th>Кампания</th><th class="r">Расход</th><th class="r">Показы</th><th class="r">CTR</th><th class="r">CPC</th><th class="r">Лиды</th><th class="r">CPL</th><th class="r">Продажи</th><th class="r">ROMI</th><th>Оценка</th><th></th></tr></thead><tbody id="ad-body"></tbody></table></div>
+ <div class="panel" id="ad-report-wrap"><div class="row" style="justify-content:space-between"><h2>Разбор от ИИ</h2><select id="ad-rep-pick" style="width:auto" hidden></select></div><div id="ad-report" style="margin-top:12px"></div></div>
+</section>
+</main>
+
+<div id="scrim" hidden></div>
+<aside id="drawer" hidden aria-label="Карточка лида"></aside>
+<div id="tip" hidden></div>
+
+<script>
+const NICHE={
+clinic:{label:"клиника",goal:"записать пациента на консультацию или диагностику",infoLabel:"Адрес, график, условия",
+ ex:["Клиника «Шипагер»","Астана, пр. Кабанбай батыра 10. Пн–Сб 8:00–20:00. Анализы в день приёма, результаты в WhatsApp. Лифт и пандус. Рассрочка Kaspi Red на check-up. Скидок сейчас нет."],
+ rule:"Не ставь диагнозы и не назначай лечение. При острых симптомах советуй срочно звонить 103 или ехать в ближайшую клинику.",
+ step:"первичная консультация",
+ obj:"Клиника: «Боюсь» → врач сначала всё объяснит, можно прийти просто на консультацию. «Вылечите?» → честно: до осмотра результат не обещаем, врач предложит план.",
+ fields:"услуга, конкретная дата и время приёма, имя и телефон клиента",
+ confirm:"подтверди услугу, дату и время, цену из прайс-листа и адрес клиники, скажи, что накануне придёт напоминание в WhatsApp",
+ q:["Сколько стоит check-up сердца?","Дорого, в другой клинике дешевле","Я подумаю"],
+ qAfter:["Спасибо!","Можно перенести на другое время?","Как к вам добраться?"],
+ prices:[["Приём врачей","Консультация терапевта","8 000 ₸","30 минут, осмотр и план обследования"],["Приём врачей","Приём кардиолога","12 000 ₸",""],["Приём врачей","Приём гастроэнтеролога","12 000 ₸",""],["Диагностика","УЗИ брюшной полости","9 000 ₸","результат сразу на руки"],["Диагностика","УЗИ щитовидной железы","7 000 ₸",""],["Диагностика","ЭКГ с расшифровкой","4 500 ₸",""],["Анализы","Общий анализ крови","2 500 ₸","результат в день сдачи"],["Анализы","Биохимия крови, 10 показателей","9 500 ₸",""],["Программы","Check-up «Сердце»","35 000 ₸","ЭКГ, УЗИ сердца, анализы, приём кардиолога; рассрочка Kaspi Red"]]},
+goods:{label:"товары и БАДы",goal:"оформить заказ",infoLabel:"Доставка и оплата",
+ ex:["Vita Store","Доставка по Астане за 1 день, по Казахстану 2–5 дней. Оплата Kaspi или картой. Бесплатная доставка от 15 000 ₸."],
+ rule:"Не обещай лечебный эффект: БАД не является лекарством. По противопоказаниям советуй консультацию врача.",
+ step:"одна упаковка на пробу",
+ obj:"Товары: «Вылечит?» → БАД не лекарство, это поддержка рациона, при заболевании — к врачу. «Подделка?» → предложи фото документов, если они есть в данных.",
+ fields:"товар и количество, город и адрес доставки, имя и телефон клиента",
+ confirm:"подтверди состав заказа, сумму по прайс-листу, адрес и срок доставки, способ оплаты",
+ q:["Что посоветуете для иммунитета?","Это вылечит давление?","На маркетплейсе дешевле"],
+ qAfter:["Спасибо!","Когда привезут?","Можно поменять адрес?"],
+ prices:[["Витамины","Омега-3, 90 капсул","7 900 ₸","на 3 месяца"],["Витамины","Витамин D3 2000 МЕ","5 500 ₸",""],["Витамины","Магний B6","4 900 ₸",""],["Наборы","Набор «Иммунитет»","14 900 ₸","D3, витамин C, цинк; на 2 месяца"],["Доставка","Доставка по Астане","1 000 ₸","бесплатно от 15 000 ₸"]]},
+school:{label:"онлайн-школа",goal:"записать на бесплатный пробный урок",infoLabel:"Старт потоков, рассрочка",
+ ex:["SkillUp Academy","Новый поток 1-го числа каждого месяца. Рассрочка Kaspi на 12 месяцев. Занятия онлайн, записи остаются навсегда."],
+ rule:"Не гарантируй доход или трудоустройство. Говори о навыках и поддержке куратора.",
+ step:"бесплатный пробный урок",
+ obj:"Школа: «Гарантируете заработок?» → честно: доход зависит от практики, гарантируем программу и поддержку куратора. «Всё есть бесплатно» → структура, проверка заданий, обратная связь.",
+ fields:"курс, дата и время пробного урока, имя и телефон клиента",
+ confirm:"подтверди курс, дату и время пробного урока, скажи, что ссылка придёт сюда за час до начала",
+ q:["Подойдёт ли курс новичку?","Гарантируете заработок?","Дорого, подумаю"],
+ qAfter:["Спасибо!","Что нужно подготовить?","Можно перенести урок?"],
+ prices:[["Курсы","Курс SMM, 8 недель","120 000 ₸","онлайн с куратором, проверка заданий"],["Курсы","Таргетированная реклама, 10 недель","150 000 ₸","практика на реальном бюджете"],["Пробное","Пробный урок","бесплатно","60 минут онлайн"],["Оплата","Рассрочка Kaspi","0%","на 12 месяцев"]]}};
+const STATUS=[["new","Новый",""],["booked","Записан","acc"],["confirmed","Подтверждён","acc"],["came","Пришёл","warn"],["won","Оплатил","good"],["lost","Отказ","bad"]];
+const ST=Object.fromEntries(STATUS.map(s=>[s[0],s]));
+const SOURCES=["Instagram / Facebook таргет","TikTok таргет","Google Ads","2GIS","WhatsApp напрямую","Сайт","Тест-бот"];
+const PLATS=["Meta (Instagram/Facebook)","TikTok","Google Ads","2GIS","Яндекс Директ","VK Реклама","Другое"];
+const TEMP={"горячий":"bad","тёплый":"warn","холодный":"acc"};
+
+const $=id=>document.getElementById(id);
+function el(t,p,...c){const e=document.createElement(t);if(p)for(const k in p){const v=p[k];const ar=k.startsWith("aria-");if(v==null||(v===false&&!ar))continue;if(k==="class")e.className=v;else if(k==="text")e.textContent=v;else if(k.startsWith("on"))e.addEventListener(k.slice(2),v);else if(k==="style")e.style.cssText=v;else e.setAttribute(k,v===true&&!ar?"":String(v))}for(const x of c.flat(9)){if(x==null||x===false)continue;e.append(x.nodeType?x:String(x))}return e}
+const clone=o=>JSON.parse(JSON.stringify(o));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const fmt=n=>Number.isFinite(n)?Math.round(n).toLocaleString("ru-RU"):"—";
+const money=n=>Number.isFinite(n)?fmt(n)+" ₸":"—";
+const pct=n=>Number.isFinite(n)?(n*100).toFixed(Math.abs(n)<.1?2:1).replace(".",",")+"%":"—";
+function num(s){if(typeof s==="number")return s;let t=String(s??"").replace(/[  ]/g," ").trim();if(/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(t.replace(/\s/g,"")))t=t.replace(/,/g,"");const m=t.match(/-?\d[\d ]*(?:[.,]\d+)?/);if(!m)return NaN;return parseFloat(m[0].replace(/ /g,"").replace(",","."))}
+const dt=ts=>ts?new Date(ts).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+function toast(t){const d=el("div",{class:"toast",role:"status",text:t});document.body.append(d);setTimeout(()=>d.remove(),3200)}
+const ls={get(k){try{return JSON.parse(localStorage.getItem(k)||"null")}catch{return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+
+/* ---------- хранилище: общая база артефакта, иначе браузер ---------- */
+let DB=null,SAMPLE=null,mode="loading";
+const store={config:null,leads:[],ads:[],reports:[],adset:null};
+const LSK="altim-v2";
+function lsSave(){if(mode==="local")ls.set(LSK,{config:store.config,leads:store.leads,ads:store.ads,reports:store.reports,adset:store.adset})}
+function onErr(e){toast(e&&e.code==="invalid_argument"?"Нет прав на изменение данных. Попросите у владельца доступ «Участник».":e&&e.code==="quota_exceeded"?"Хранилище заполнено, удалите старые записи.":"Не удалось сохранить. Попробуйте ещё раз.")}
+async function put(col,id,data){try{if(DB)await DB.collection(col).doc(id).set(data);else{const a=store[col],i=a.findIndex(x=>x.id===id),v={...data,id};i<0?a.unshift(v):a[i]=v;lsSave();renderData()}return true}catch(e){onErr(e);return false}}
+async function patch(col,id,data){try{if(DB)await DB.collection(col).doc(id).update(data);else{const x=store[col].find(x=>x.id===id);if(x)Object.assign(x,data);lsSave();renderData()}return true}catch(e){onErr(e);return false}}
+async function remove(col,id){try{if(DB)await DB.collection(col).doc(id).delete();else{store[col]=store[col].filter(x=>x.id!==id);lsSave();renderData()}return true}catch(e){onErr(e);return false}}
+async function setDoc(path,key,data){try{if(DB)await DB.doc(path).set(data);else{store[key]=data;lsSave()}return true}catch(e){onErr(e);return false}}
+
+/* ---------- настройки компании и прайс ---------- */
+let cfg=null,cfgDirty=false;
+const presetPrices=n=>NICHE[n].prices.map(([cat,name,price,note])=>({cat,name,price,note}));
+const defaultCfg=n=>({niche:n,name:NICHE[n].ex[0],mgr:"Дана",info:NICHE[n].ex[1],source:SOURCES[0],prices:presetPrices(n),preset:n});
+function applyConfig(){cfg=clone(store.config||defaultCfg("clinic"));if(!NICHE[cfg.niche])cfg.niche="clinic";cfg.prices=cfg.prices||[];fillSetup();renderPrices();if(!chat||!chat.hist.some(h=>h[0]==="Клиент"))startChat()}
+function markDirty(){cfgDirty=true;$("p-dirty").hidden=false}
+async function saveCfg(){readSetup();cfg.prices=cfg.prices.filter(p=>(p.name||"").trim()||(p.price||"").trim());const ok=await setDoc("config/company","config",clone(cfg));if(ok){cfgDirty=false;$("p-dirty").hidden=true}renderPrices();return ok}
+
+$("f-source").append(...SOURCES.map(s=>el("option",{value:s,text:s})));
+function fillSetup(){const c=NICHE[cfg.niche];document.querySelectorAll("#niches button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.n===cfg.niche));
+ $("l-info").textContent=c.infoLabel;$("f-name").value=cfg.name||"";$("f-mgr").value=cfg.mgr||"";$("f-info").value=cfg.info||"";$("f-source").value=cfg.source||SOURCES[0];renderPricebox()}
+function readSetup(){cfg.name=$("f-name").value.trim()||NICHE[cfg.niche].ex[0];cfg.mgr=$("f-mgr").value.trim()||"Дана";cfg.info=$("f-info").value.trim();cfg.source=$("f-source").value}
+function renderPricebox(){const p=cfg.prices.filter(x=>x.name);$("cnt-prices").textContent=p.length;const b=$("pricebox");b.replaceChildren(
+ el("div",{class:"row",style:"justify-content:space-between"},el("b",{text:p.length?`Прайс-лист: ${p.length} позиций`:"Прайс-лист пуст"}),el("button",{class:"btn",style:"padding:4px 10px;font-size:13px",onclick:()=>showTab("prices")},p.length?"Изменить":"Загрузить")),
+ p.length?el("ul",null,p.slice(0,3).map(x=>el("li",{text:x.name+" — "+(x.price||"по запросу")})),p.length>3?el("li",{text:"и ещё "+(p.length-3)}):null):el("p",{class:"muted",text:"Без прайса бот не будет называть цены."}))}
+["f-name","f-mgr","f-info","f-source"].forEach(id=>$(id).addEventListener("input",()=>{readSetup();cfgDirty=true;if(id==="f-name")$("c-name").textContent=cfg.name}));
+document.querySelectorAll("#niches button").forEach(b=>b.onclick=()=>{const n=b.dataset.n;if(n===cfg.niche)return;readSetup();const was=NICHE[cfg.niche];
+ if(cfg.name===was.ex[0])cfg.name=NICHE[n].ex[0];if(cfg.info===was.ex[1])cfg.info=NICHE[n].ex[1];if(cfg.preset)cfg.prices=presetPrices(n),cfg.preset=n;cfg.niche=n;markDirty();fillSetup();renderPrices();startChat()});
+
+function renderPrices(){const body=$("p-body");body.replaceChildren();
+ if(!cfg.prices.length)body.append(el("tr",null,el("td",{colspan:5,class:"empty",text:"Прайс пуст. Загрузите файл, вставьте текст выше или добавьте позицию."})));
+ cfg.prices.forEach((p,i)=>{const inp=(k,ph,cls)=>el("input",{id:`p-${i}-${k}`,value:p[k]||"",placeholder:ph,class:cls,"aria-label":ph,oninput:e=>{p[k]=e.target.value;cfg.preset=null;markDirty();renderPricebox()}});
+  body.append(el("tr",null,el("td",null,inp("cat","Категория")),el("td",null,inp("name","Название")),el("td",null,inp("price","Цена","num")),el("td",null,inp("note","Что входит")),
+   el("td",null,el("button",{class:"btn ghost",title:"Удалить позицию","aria-label":"Удалить позицию",onclick:()=>{cfg.prices.splice(i,1);cfg.preset=null;markDirty();renderPrices()}},"✕"))))});
+ renderPricebox()}
+$("p-addrow").onclick=()=>{cfg.prices.push({cat:cfg.prices.at(-1)?.cat||"",name:"",price:"",note:""});markDirty();renderPrices();$(`p-${cfg.prices.length-1}-name`).focus()};
+$("p-save").onclick=async()=>{if(await saveCfg())toast("Прайс сохранён. Бот уже отвечает по новым ценам.")};
+$("p-preset").onclick=()=>{cfg.prices=presetPrices(cfg.niche);cfg.preset=cfg.niche;markDirty();renderPrices();toast("Загружен шаблон ниши — замените цены на свои и сохраните")};
+$("p-test").onclick=()=>{showTab("bot");startChat()};
+
+/* разбор прайса из текста */
+function splitCells(line,d){const out=[];let cur="",q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(q){if(ch==='"'){if(line[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}else if(ch==='"')q=true;else if(ch===d){out.push(cur.trim());cur=""}else cur+=ch}out.push(cur.trim());return out}
+function splitOutside(s,sep){const out=[];let depth=0,cur="";for(let i=0;i<s.length;i++){const ch=s[i];if("(«".includes(ch))depth++;if(")»".includes(ch))depth=Math.max(0,depth-1);if(!depth&&s.startsWith(sep,i)){out.push(cur);cur="";i+=sep.length-1}else cur+=ch}out.push(cur);return out.map(x=>x.trim()).filter(Boolean)}
+const PRICE_RE=/^(?:от\s*)?\d[\d\s .,]*\s*(?:₸|тг\.?|тенге|kzt|руб\.?|₽|\$|сом|%)?$|^бесплатно$/i;
+function normPrice(s){s=s.trim();if(/^\d[\d\s .,]*$/.test(s)){const n=num(s);if(Number.isFinite(n))return fmt(n)+" ₸"}return s.replace(/\s*(тг\.?|тенге|kzt)$/i," ₸")}
+function parsePrices(text){const rows=[];let cat="";
+ for(const raw of text.replace(/\r/g,"").split("\n")){const l=raw.trim();if(!l)continue;
+  const d=l.includes("\t")?"\t":(l.split(";").length>1?";":null);
+  if(d){const cells=splitCells(l,d);const pi=cells.findIndex((c,i)=>i>0&&PRICE_RE.test(c));
+   if(pi<0){if(/цена|price|стоимость/i.test(l))continue;if(cells.filter(Boolean).length===1){cat=cells.find(Boolean).replace(/:$/,"");continue}continue}
+   const before=cells.slice(0,pi).filter(Boolean);const name=before.at(-1)||"";const c2=before.length>1?before[0]:cat;
+   if(name)rows.push({cat:c2,name,price:normPrice(cells[pi]),note:cells.slice(pi+1).filter(Boolean).join(", ")});continue}
+  const items=(l.match(/\s[—–]\s/g)||[]).length>1?splitOutside(l,", "):[l];
+  let hit=false;for(const it of items){const m=it.match(/^(.+?)\s*(?:[—–:|]|\s-\s|\.{2,})\s*((?:от\s*)?\d[\d\s .,]*\s*(?:₸|тг\.?|тенге|kzt|руб\.?|₽|\$|сом)?|бесплатно)\s*(?:[(,;.]\s*(.+?)\)?\s*)?$/i);
+   if(m){hit=true;rows.push({cat,name:m[1].replace(/^[-•*\d.)\s]+/,"").trim(),price:normPrice(m[2]),note:(m[3]||"").trim()})}}
+  if(!hit&&!/\d/.test(l)&&l.length<60)cat=l.replace(/[:：]$/,"")}
+ return rows}
+function applyParsed(rows,msgId){if(!rows.length){$(msgId).textContent="Не нашёл позиций с ценами. Попробуйте «Распознать с ИИ».";return}
+ if($("p-merge").value==="replace")cfg.prices=rows;else cfg.prices.push(...rows);cfg.preset=null;markDirty();renderPrices();$(msgId).textContent=`Найдено позиций: ${rows.length}. Проверьте таблицу и нажмите «Сохранить прайс».`}
+$("p-parse").onclick=()=>applyParsed(parsePrices($("p-paste").value),"p-msg");
+$("p-ai").onclick=async()=>{const t=$("p-paste").value.trim();if(!t){$("p-msg").textContent="Сначала вставьте текст прайса или выберите файл.";return}
+ if(!SAMPLE){$("p-msg").textContent="ИИ-распознавание работает, когда страница открыта в Claude. Нажмите «Разобрать».";return}
+ $("p-msg").textContent="ИИ читает прайс…";$("p-ai").disabled=true;
+ try{const r=await SAMPLE.json(`Извлеки позиции прайс-листа из текста ниже. Цены переноси точно как в тексте, валюта по умолчанию ₸ (тенге). Ничего не выдумывай и не добавляй. Заголовки разделов — это категории. Условия, состав и примечания — в note.
+Верни JSON: {"items":[{"cat":"категория","name":"название","price":"цена как в тексте","note":"что входит, условия"}]}
+
+ТЕКСТ:
+${t.slice(0,24000)}`,{modelTier:"default"});
+  applyParsed((r.items||[]).filter(x=>x&&x.name).map(x=>({cat:String(x.cat||""),name:String(x.name),price:normPrice(String(x.price||"")),note:String(x.note||"")})),"p-msg")}
+ catch(e){$("p-msg").textContent=e?.code==="rate_limited"?"Слишком много запросов, подождите минуту.":"Не удалось распознать. Попробуйте «Разобрать» или сократите текст."}
+ $("p-ai").disabled=false};
+
+/* чтение файлов: xlsx через SheetJS, остальное как текст */
+let xlsxP=null;
+function loadXLSX(){return xlsxP||(xlsxP=new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";s.onload=()=>ok(window.XLSX);s.onerror=()=>{xlsxP=null;no()};document.head.append(s)}))}
+async function readFile(f){if(/\.xlsx?$/i.test(f.name)){const X=await loadXLSX();const wb=X.read(await f.arrayBuffer(),{type:"array"});return wb.SheetNames.map(n=>X.utils.sheet_to_csv(wb.Sheets[n],{FS:"\t",blankrows:false})).join("\n")}return await f.text()}
+$("p-file").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{$("p-paste").value=await readFile(f);$("p-msg").textContent="Файл загружен: "+f.name;applyParsed(parsePrices($("p-paste").value),"p-msg")}catch{$("p-msg").textContent="Не удалось прочитать файл. Сохраните его как CSV и попробуйте снова."}e.target.value=""};
+function priceText(p){const rows=p.filter(r=>r.name);if(!rows.length)return"(прайс-лист пуст — цены не называй, предложи уточнить у коллег)";let out=[],cat=null;for(const r of rows){if((r.cat||"")!==cat){cat=r.cat||"";if(cat)out.push(cat+":")}out.push("- "+r.name+" — "+(r.price||"цена по запросу")+(r.note?" ("+r.note+")":""))}return out.join("\n")}
+
+/* ---------- тест-бот ---------- */
+let chat=null;
+function add(role,text,cls){const d=el("div",{class:"m "+(role==="bot"?"bot":"me")+(cls?" "+cls:""),text});$("log").append(d);$("log").scrollTop=1e9;return d}
+function typing(){const d=el("div",{class:"m bot","aria-label":"печатает"},el("span",{class:"dots"},el("i"),el("i"),el("i")));$("log").append(d);$("log").scrollTop=1e9;return d}
+function setQuick(list){$("quick").replaceChildren(...list.map(t=>el("button",{type:"button",onclick:()=>ask(t)},t)))}
+function setStage(booked){const c=$("c-chip");c.className="chip "+(booked?"good":"");c.textContent=booked?"Клиент записан":"Идёт диалог"}
+function startChat(){readSetup();chat={hist:[],booked:null,leadId:null,count:0,busy:false};$("log").replaceChildren();$("c-name").textContent=cfg.name;setStage(false);
+ const g=`Здравствуйте! Меня зовут ${cfg.mgr}, я менеджер ${cfg.name}. Как могу к вам обращаться?`;add("bot",g);chat.hist.push(["Менеджер",g]);setQuick(NICHE[cfg.niche].q);
+ $("note").textContent=SAMPLE||mode==="loading"?"Тестовый режим: до 30 сообщений в диалоге.":"Ответы бота работают, когда страница открыта в Claude."}
+$("start").onclick=async()=>{readSetup();if(cfgDirty)saveCfg();startChat();if(innerWidth<880)$("chat").scrollIntoView({behavior:"smooth"});$("msg").focus({preventScroll:true})};
+$("send").onsubmit=e=>{e.preventDefault();const t=$("msg").value.trim();if(t){$("msg").value="";ask(t)}};
+
+function noQuestions(s){const parts=s.match(/[^.!?…]+(?:[.!?…]+|$)\s*/g)||[s];const kept=parts.filter(p=>!p.includes("?"));const out=kept.join("").trim();return /[\p{L}\d]/u.test(out)?out:""}
+function salvage(t){try{const a=t.indexOf("{"),b=t.lastIndexOf("}");if(a>=0&&b>a)return JSON.parse(t.slice(a,b+1))}catch{}return{messages:[t.replace(/[{}"\[\]]/g,"").replace(/messages\s*:/,"").trim()]}}
+
+function botPrompt(){const c=NICHE[cfg.niche],mgr=cfg.mgr,today=new Date().toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+ const head=`Ты — ${mgr}, менеджер отдела продаж компании «${cfg.name}» (ниша: ${c.label}). Ты переписываешься с клиентом в WhatsApp. Сегодня ${today}.
+
+ДАННЫЕ КОМПАНИИ:
+${c.infoLabel}: ${cfg.info||"не указано"}
+
+ПРАЙС-ЛИСТ КОМПАНИИ (единственный источник цен):
+${priceText(cfg.prices)}`;
+ const dialog=`ДИАЛОГ:\n${chat.hist.map(h=>h[0]+": "+h[1]).join("\n")}`;
+ const format=`ФОРМАТ ОТВЕТА: только JSON, без пояснений вокруг:
+{"messages":["сообщение 1","сообщение 2 (необязательно)"],"booked":${chat.booked?"true":"false"},"booking":{"name":"","phone":"","service":"","datetime":"","price":""}}
+messages — 1 или 2 коротких сообщения менеджера ${mgr}, как в мессенджере, без подписи и markdown.
+booking — всё, что уже известно о записи (неизвестное — пустая строка). service — что именно выбрал клиент, price — цена этой позиции из прайс-листа.`;
+ if(chat.booked){const b=chat.booked;return `${head}
+
+КЛИЕНТ УЖЕ ЗАПИСАН: ${b.service||"—"}; ${b.datetime||"—"}; ${b.name||""} ${b.phone||""}. Цель достигнута, запись оформлена и подтверждена.
+
+КАК ОТВЕЧАТЬ ПОСЛЕ ЗАПИСИ:
+- Не задавай никаких вопросов. В ответе не должно быть ни одного вопросительного знака: никаких «Чем ещё помочь?», «Удобно?», «Остались вопросы?».
+- Ничего не продавай и не предлагай дополнительно: дальше клиента ведёт отдел продаж.
+- Отвечай только на то, о чём написал клиент: 1–2 коротких предложения, утвердительно, с точкой в конце. Факты — только из данных компании и прайс-листа.
+- Благодарит или прощается → коротко и тепло попрощайся.
+- Просит перенести или отменить → подтверди, что передаёшь администратору и он свяжется, чтобы подтвердить. Если клиент назвал новое время — запиши его в booking.datetime.
+- Нужна дополнительная информация, которой нет в данных → скажи, что менеджер свяжется и всё расскажет.
+- Пиши на языке клиента, на «вы», тепло и по-человечески.
+
+${dialog}
+
+${format}`}
+ return `${head}
+
+ЦЕЛЬ: ${c.goal}.
+
+ЦЕНЫ:
+- Называй цены только из прайс-листа, точно как там написано. Не округляй и не придумывай.
+- Предлагай 1–2 позиции под ситуацию клиента, а не весь прайс. На вопрос «что у вас есть» назови 2–3 популярные позиции с ценами.
+- Позиции нет в прайсе → скажи, что уточнишь у коллег, и предложи ближайшую позицию из прайса.
+- Скидки, акции и рассрочку упоминай, только если они есть в прайсе или данных компании.
+- Если в примечании к позиции сказано, что входит в цену, используй это как аргумент ценности.
+
+КАК ПИШЕШЬ:
+- Как живой опытный менеджер в мессенджере: тепло, просто, на «вы», без канцелярита, списков и markdown.
+- Обычно 2–4 предложения (примерно 150–350 символов). Не отвечай сухим одним словом и не вываливай всю информацию сразу.
+- Обращайся по имени, если клиент его назвал. Ответь на все вопросы клиента, затем задай ОДИН вопрос, который ведёт к записи.
+- Пиши на языке клиента (русский или казахский). Эмодзи не больше одного${cfg.niche==="clinic"?", лучше без них":""}.
+
+ЭТАПЫ: узнать имя → понять ситуацию (2–3 вопроса, по одному) → предложить 1–2 позиции из прайса с ценой и выгодой → отработать возражения → закрыть выбором из двух вариантов (время или вариант) → взять телефон.
+
+ВОЗРАЖЕНИЯ: присоединись («понимаю»), уточни, что именно смущает, дай аргумент из данных или лёгкий первый шаг (${c.step}), закончи вопросом с шагом вперёд. «Подумаю» → спроси, над чем именно, предложи придержать время и договорись, когда написать. «Дорого» или «у других дешевле» → не отвечай просто «скидок нет»: объясни, что входит в цену, пересчитай выгоду, предложи позицию дешевле из прайса или рассрочку, если она есть. Если клиент переживает (здоровье, близкие, доверие) → сначала сочувствие, потом конкретное решение.
+${c.obj}
+
+ОФОРМЛЕНИЕ ЗАПИСИ:
+- Запись оформлена, когда известны: ${c.fields}. Если чего-то не хватает — спроси только это и оставь "booked": false.
+- В момент оформления поставь "booked": true и напиши одно итоговое сообщение: ${c.confirm}, и тепло попрощайся.
+- В итоговом сообщении нет вопросов и нет новых предложений. Диалог на этом завершён.
+
+РАМКИ: никогда не выдумывай цены, скидки, акции, отзывы, кейсы и гарантии. ${c.rule} После двух отказов не дави. Если клиент искренне спрашивает, бот ли ты, честно скажи, что ты ИИ-ассистент, и предложи соединить с живым менеджером.
+
+${dialog}
+
+${format}`}
+
+async function ask(t){if(!chat||chat.busy)return;
+ if(!SAMPLE){$("note").textContent="Ответы бота работают, когда страница открыта в Claude.";return}
+ if(chat.count>=30){$("note").textContent="Лимит теста — 30 сообщений. Нажмите «Начать новый диалог».";return}
+ chat.busy=true;chat.count++;add("me",t);chat.hist.push(["Клиент",t]);const d=typing();const after=!!chat.booked;let res;
+ try{res=await SAMPLE.json(botPrompt(),{cache:false,modelTier:"default"})}
+ catch(e){if(e&&e.code==="invalid_json"&&e.text)res=salvage(e.text);else{d.remove();add("bot",e&&e.code==="rate_limited"?"Слишком много сообщений, подождите минуту.":"Не удалось получить ответ. Отправьте сообщение ещё раз.","err");chat.count--;chat.hist.pop();chat.busy=false;return}}
+ let msgs=(Array.isArray(res?.messages)?res.messages:[res?.reply||res?.text||""]).map(s=>String(s||"").replace(/\|\|/g," ").trim()).filter(Boolean);
+ const b=res&&typeof res.booking==="object"&&res.booking?res.booking:{};
+ const nowBooked=after||(res?.booked===true&&!!(b.name||b.phone)&&!!(b.datetime||b.service));
+ if(nowBooked){msgs=msgs.map(noQuestions).filter(Boolean);if(!msgs.length)msgs=[after?"Хорошо, всё передано администратору. Ждём вас!":"Готово, вы записаны. Ждём вас!"]}
+ if(!msgs.length)msgs=["Секунду, уточню и вернусь с ответом."];
+ chat.hist.push(["Менеджер",msgs.join(" ")]);
+ await wait(400+Math.min(msgs[0].length*14,2000));d.replaceWith(add("bot",msgs[0]));
+ for(const m of msgs.slice(1)){const d2=typing();await wait(600+Math.min(m.length*14,2000));d2.replaceWith(add("bot",m))}
+ if(!after&&nowBooked){chat.booked={name:String(b.name||""),phone:String(b.phone||""),service:String(b.service||""),datetime:String(b.datetime||""),price:String(b.price||"")};await createLead();}
+ else if(after&&chat.leadId){const upd={transcript:tx()};const lead=store.leads.find(x=>x.id===chat.leadId);
+  if(b.datetime&&String(b.datetime)!==chat.booked.datetime){chat.booked.datetime=String(b.datetime);upd.datetime=chat.booked.datetime;upd.history=[...(lead?.history||[]),{at:Date.now(),text:"Клиент попросил перенос: "+chat.booked.datetime}]}
+  patch("leads",chat.leadId,upd)}
+ chat.busy=false}
+const tx=()=>chat.hist.map(h=>({r:h[0]==="Клиент"?"c":"m",t:h[1]}));
+function priceOf(service){const s=(service||"").toLowerCase();const p=cfg.prices.find(x=>x.name&&(s.includes(x.name.toLowerCase())||x.name.toLowerCase().includes(s)));return p?num(p.price):NaN}
+
+async function createLead(){const b=chat.booked,id=uid();chat.leadId=id;let amount=num(b.price);if(!Number.isFinite(amount))amount=priceOf(b.service);
+ const lead={name:b.name||"Без имени",phone:b.phone,service:b.service,datetime:b.datetime,price:b.price,amount:Number.isFinite(amount)?amount:0,source:cfg.source,company:cfg.name,niche:cfg.niche,
+  status:"booked",createdAt:Date.now(),transcript:tx(),analysis:null,analysisState:"pending",temperature:"",score:0,notes:[],history:[{at:Date.now(),text:"ИИ-бот записал клиента"}],demo:false};
+ await put("leads",id,lead);setStage(true);setQuick(NICHE[cfg.niche].qAfter);
+ $("log").append(el("div",{class:"sys"},el("div",null,el("b",{text:"Клиент записан, карточка лида создана"}),el("span",{class:"muted small",text:[b.service,b.datetime,b.name].filter(Boolean).join(" · ")})),el("button",{class:"btn",onclick:()=>{showTab("crm");openLead(id)}},"Открыть карточку")));$("log").scrollTop=1e9;
+ analyzeLead(id,lead)}
+
+/* ---------- карточка лида от ИИ ---------- */
+async function analyzeLead(id,lead){if(!SAMPLE){patch("leads",id,{analysisState:"none"});return}
+ const conv=(lead.transcript||[]).map(m=>(m.r==="c"?"Клиент: ":"Менеджер: ")+m.t).join("\n")||"(переписки нет)";
+ const prompt=`Ты — руководитель отдела продаж. Составь карточку лида для менеджеров, которые будут вести клиента дальше: подтверждать запись, допродавать и закрывать на услуги.
+
+Компания: «${lead.company||cfg.name}», ниша: ${NICHE[lead.niche||cfg.niche].label}.
+ПРАЙС-ЛИСТ:
+${priceText(cfg.prices)}
+
+ЗАПИСЬ: ${lead.service||"—"}; ${lead.datetime||"—"}; цена: ${lead.price||"—"}; клиент: ${lead.name} ${lead.phone||""}; источник: ${lead.source||"—"}.
+${lead.comment?"КОММЕНТАРИЙ МЕНЕДЖЕРА: "+lead.comment+"\n":""}
+ПЕРЕПИСКА:
+${conv}
+
+Правила: опирайся только на переписку, комментарий и прайс; не выдумывай факты о клиенте — если что-то не выяснено, так и пиши. Допродажи — только позиции из прайс-листа с их ценами, уместные именно этому клиенту. Пиши коротко и конкретно, по-русски.
+Верни JSON:
+{"temperature":"горячий|тёплый|холодный","score":0,"summary":"2–3 предложения: кто клиент, что хочет, на чём договорились","need":"главный запрос клиента","pains":["что беспокоит"],"objections":[{"text":"что сказал клиент","answer":"как отработали","status":"снято|частично|не снято"}],"triggers":["что важно клиенту при выборе"],"budget":"что известно о бюджете и чувствительности к цене","upsell":[{"item":"позиция из прайса","price":"цена","why":"почему уместно"}],"risks":["риски неявки или отказа"],"nextSteps":["конкретное действие отдела продаж с таймингом"],"callScript":"скрипт звонка-подтверждения, 4–6 предложений, с обращением по имени"}
+score — вероятность оплаты от 0 до 100.`;
+ try{const a=await SAMPLE.json(prompt,{modelTier:"default"});const temp=String(a.temperature||"").toLowerCase().replace("теплый","тёплый");
+  await patch("leads",id,{analysis:a,analysisState:"done",temperature:TEMP[temp]?temp:"тёплый",score:Math.max(0,Math.min(100,Math.round(num(a.score))||0))})}
+ catch(e){patch("leads",id,{analysisState:"error"})}}
+
+/* ---------- CRM ---------- */
+let crmFilter="all",openId=null;
+const fset=["all","new","booked","confirmed","came","won","lost"];
+function renderCRM(){const L=store.leads;$("cnt-crm").hidden=!L.length;$("cnt-crm").textContent=L.length;
+ const booked=L.filter(x=>["booked","confirmed","came","won"].includes(x.status)).length,came=L.filter(x=>["came","won"].includes(x.status)).length,won=L.filter(x=>x.status==="won"),sum=won.reduce((s,x)=>s+(x.amount||0),0);
+ const st=(k,v,s)=>el("div",{class:"stat"},el("span",{class:"k",text:k}),el("span",{class:"v",text:v}),el("span",{class:"s",text:s||""}));
+ $("crm-stats").replaceChildren(st("Лидов",fmt(L.length),L.filter(x=>x.temperature==="горячий").length+" горячих"),st("Записаны",fmt(booked),L.length?pct(booked/L.length)+" от лидов":""),st("Пришли",fmt(came),booked?pct(came/booked)+" доходимость":""),st("Оплатили",fmt(won.length),L.length?pct(won.length/L.length)+" конверсия":""),st("Сумма оплат",money(sum),won.length?"средний чек "+money(sum/won.length):""));
+ $("crm-filter").replaceChildren(...fset.map(f=>{const n=f==="all"?L.length:L.filter(x=>x.status===f).length;return el("button",{"aria-pressed":crmFilter===f,onclick:()=>{crmFilter=f;renderCRM()}},(f==="all"?"Все":ST[f][1])+" "+n)}));
+ const q=$("crm-q").value.trim().toLowerCase();
+ const rows=L.filter(x=>(crmFilter==="all"||x.status===crmFilter)&&(!q||[x.name,x.phone,x.service].join(" ").toLowerCase().includes(q)));
+ const body=$("crm-body");
+ if(mode==="loading"){body.replaceChildren(el("tr",null,el("td",{colspan:8,class:"empty",text:"Загружаем лидов…"})));return}
+ if(!rows.length){body.replaceChildren(el("tr",null,el("td",{colspan:8,class:"empty"},L.length?"Нет лидов с таким фильтром.":"Лидов пока нет. Проведите диалог в тест-боте до записи — карточка появится здесь автоматически.")));return}
+ body.replaceChildren(...rows.map(x=>el("tr",{class:"click",tabindex:0,onclick:()=>openLead(x.id),onkeydown:e=>{if(e.key==="Enter")openLead(x.id)}},
+  el("td",{class:"num muted small",text:dt(x.createdAt)}),
+  el("td",null,el("b",{text:x.name||"Без имени"}),x.demo?el("span",{class:"tag",style:"margin-left:6px"},"пример"):null,el("div",{class:"muted small num",text:x.phone||""})),
+  el("td",{text:x.service||"—"}),el("td",{text:x.datetime||"—"}),el("td",{class:"small",text:x.source||"—"}),
+  el("td",null,x.temperature?el("span",{class:"chip "+(TEMP[x.temperature]||""),text:x.temperature+(x.score?" · "+x.score:"")}):el("span",{class:"muted small",text:x.analysisState==="pending"?"анализ…":"—"})),
+  el("td",null,el("span",{class:"chip "+(ST[x.status]?.[2]||""),text:ST[x.status]?.[1]||x.status})),
+  el("td",{class:"r",text:x.amount?money(x.amount):"—"}))))}
+$("crm-q").oninput=renderCRM;
+
+function openDrawer(){$("drawer").hidden=false;$("scrim").hidden=false;document.body.style.overflow="hidden"}
+function closeDrawer(){$("drawer").hidden=true;$("scrim").hidden=true;document.body.style.overflow="";openId=null}
+$("scrim").onclick=closeDrawer;addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("drawer").hidden)closeDrawer()});
+function openLead(id){openId=id;renderCard(true);openDrawer()}
+function sec(title,...kids){return el("section",{class:"sec"},el("h3",{text:title}),...kids)}
+const list=a=>Array.isArray(a)&&a.length?el("ul",null,a.map(x=>el("li",{text:String(x)}))):el("p",{class:"muted",text:"не выяснено"});
+async function copy(t,btn){try{await navigator.clipboard.writeText(t);btn.textContent="Скопировано"}catch{btn.textContent="Выделите текст вручную"}setTimeout(()=>btn.textContent="Копировать",1600)}
+
+function renderCard(fresh){const x=store.leads.find(l=>l.id===openId);const dr=$("drawer");if(!x){if(openId)closeDrawer();return}
+ const keep=$("note-in")?.value||"";const scroll=dr.scrollTop;const a=x.analysis||{};
+ const status=el("select",{id:"lead-status",style:"width:auto","aria-label":"Статус лида",onchange:e=>{const s=e.target.value;patch("leads",x.id,{status:s,history:[...(x.history||[]),{at:Date.now(),text:"Статус: "+ST[s][1]}]})}},STATUS.map(s=>el("option",{value:s[0],selected:s[0]===x.status},s[1])));
+ const amountIn=el("input",{id:"lead-amount",class:"num",inputmode:"numeric",value:x.amount?String(x.amount):"",style:"width:130px",onchange:e=>{const v=num(e.target.value);patch("leads",x.id,{amount:Number.isFinite(v)?v:0})}});
+ let ai;
+ if(x.analysisState==="pending")ai=[sec("Карточка от ИИ",el("p",{class:"muted",text:"ИИ анализирует переписку…"}),el("div",{class:"skel",style:"width:90%"}),el("div",{class:"skel",style:"width:70%"}),el("div",{class:"skel",style:"width:80%"}))];
+ else if(!x.analysis)ai=[sec("Карточка от ИИ",el("p",{class:"muted",text:x.analysisState==="error"?"Не удалось подготовить анализ.":"Анализ ещё не сделан."}),SAMPLE?el("button",{class:"btn pri",onclick:()=>{patch("leads",x.id,{analysisState:"pending"});analyzeLead(x.id,x)}},"Сделать анализ"):el("p",{class:"muted small",text:"Анализ работает, когда страница открыта в Claude."}))];
+ else ai=[
+  sec("Оценка лида",el("div",{class:"score"},el("span",{class:"chip "+(TEMP[x.temperature]||""),text:x.temperature||"—"}),el("div",{class:"meter",role:"img","aria-label":"Вероятность оплаты "+x.score+"%"},el("b",{style:`width:${x.score||0}%`})),el("b",{class:"num",text:(x.score||0)+"%"})),el("p",{text:a.summary||""})),
+  sec("Потребность",el("p",{text:a.need||"не выяснено"}),el("h3",{text:"Что беспокоит",style:"margin-top:6px"}),list(a.pains)),
+  sec("Возражения",...(Array.isArray(a.objections)&&a.objections.length?a.objections.map(o=>el("div",{class:"obj"},el("div",{class:"row",style:"justify-content:space-between"},el("b",{text:"«"+(o.text||"")+"»"}),el("span",{class:"chip "+(o.status==="снято"?"good":o.status==="частично"?"warn":"bad"),text:o.status||"—"})),el("span",{class:"muted small",text:o.answer||""}))):[el("p",{class:"muted",text:"Возражений не было"})])),
+  sec("Что важно клиенту",list(a.triggers),el("h3",{text:"Бюджет",style:"margin-top:6px"}),el("p",{text:a.budget||"не выяснено"})),
+  sec("Допродажи из прайса",...(Array.isArray(a.upsell)&&a.upsell.length?[el("ul",null,a.upsell.map(u=>el("li",null,el("b",{text:u.item||""}),u.price?" — "+u.price:"",el("div",{class:"muted small",text:u.why||""}))))]:[el("p",{class:"muted",text:"Подходящих позиций нет"})])),
+  sec("Риски",list(a.risks)),
+  sec("Следующие шаги",list(a.nextSteps)),
+  sec("Скрипт звонка-подтверждения",el("div",{class:"script",text:a.callScript||""}),el("div",null,el("button",{class:"btn",onclick:e=>copy(a.callScript||"",e.target)},"Копировать")))];
+ const phoneBtn=el("button",{class:"btn",style:"padding:2px 8px;font-size:12px;margin-left:6px",onclick:e=>copy(x.phone||"",e.target)},"Копировать");
+ let delStep=el("div",{class:"row"});const delBtn=el("button",{class:"btn danger",onclick:()=>{delStep.replaceChildren(el("span",{class:"small",text:"Удалить лида без возможности восстановить?"}),el("button",{class:"btn danger",onclick:async()=>{if(await remove("leads",x.id)){closeDrawer();toast("Лид удалён")}}},"Удалить"),el("button",{class:"btn",onclick:()=>delStep.replaceChildren(delBtn)},"Отмена"))}},"Удалить лида");delStep.append(delBtn);
+ dr.replaceChildren(el("div",{class:"card"},
+  el("div",{class:"card-head"},el("div",null,el("span",{class:"muted small",text:(x.demo?"Пример · ":"")+"Лид от "+dt(x.createdAt)}),el("h2",{text:x.name||"Без имени"})),el("button",{class:"btn ghost","aria-label":"Закрыть",onclick:closeDrawer},"✕")),
+  el("div",{class:"row"},status,el("label",{for:"lead-amount",style:"margin:0 0 0 8px",class:"small"},"Сумма, ₸"),amountIn),
+  sec("Запись",el("dl",{class:"kv"},el("dt",null,"Телефон"),el("dd",{class:"num"},x.phone||"—",x.phone?phoneBtn:null),el("dt",null,"Услуга"),el("dd",{text:x.service||"—"}),el("dt",null,"Когда"),el("dd",{text:x.datetime||"—"}),el("dt",null,"Цена по прайсу"),el("dd",{text:x.price||"—"}),el("dt",null,"Источник"),el("dd",{text:x.source||"—"}),x.comment?[el("dt",null,"Комментарий"),el("dd",{text:x.comment})]:null)),
+  ...ai,
+  sec("Заметки отдела продаж",...((x.notes||[]).length?x.notes.map(n=>el("div",{class:"small"},el("span",{class:"muted num",text:dt(n.at)+"  "}),n.text)):[el("p",{class:"muted small",text:"Пока нет заметок"})]),
+   el("textarea",{id:"note-in",placeholder:"Например: перезвонить в 18:00, просит скидку на check-up"}),el("div",null,el("button",{class:"btn pri",onclick:async()=>{const t=$("note-in").value.trim();if(!t)return;if(await patch("leads",x.id,{notes:[...(x.notes||[]),{at:Date.now(),text:t}]}))$("note-in").value=""}},"Добавить заметку"))),
+  sec("История",el("div",{class:"hist"},(x.history||[]).slice().reverse().map(h=>el("div",null,el("span",{class:"muted num",text:dt(h.at)+"  "}),h.text)))),
+  (x.transcript||[]).length?el("section",{class:"sec"},el("details",null,el("summary",{text:"Переписка с ботом · "+x.transcript.length+" сообщений"}),el("div",{class:"tx"},x.transcript.map(m=>el("div",{class:"m "+(m.r==="c"?"me":"bot"),text:m.t}))))):null,
+  el("div",{class:"row",style:"justify-content:space-between"},x.analysis&&SAMPLE?el("button",{class:"btn",onclick:()=>{patch("leads",x.id,{analysisState:"pending"});analyzeLead(x.id,x)}},"Обновить анализ"):el("span"),delStep)));
+ if(keep)$("note-in").value=keep;if(!fresh)dr.scrollTop=scroll;else dr.scrollTop=0}
+
+$("crm-add").onclick=()=>{openId=null;const f=(id,lab,attrs)=>[el("label",{for:id,text:lab}),el(attrs?.tag||"input",{id,...attrs,tag:null})];const srcSel=el("select",{id:"nl-source"},SOURCES.map(s=>el("option",{value:s,text:s})));
+ $("drawer").replaceChildren(el("div",{class:"card"},el("div",{class:"card-head"},el("h2",{text:"Новый лид"}),el("button",{class:"btn ghost","aria-label":"Закрыть",onclick:closeDrawer},"✕")),
+  el("div",{class:"sec"},f("nl-name","Имя клиента"),f("nl-phone","Телефон",{inputmode:"tel"}),f("nl-service","Услуга или товар"),f("nl-date","Дата и время записи",{placeholder:"например, 18 октября, 15:00"}),el("label",{for:"nl-source",text:"Источник"}),srcSel,
+   f("nl-comment","Что известно о клиенте",{tag:"textarea",placeholder:"Звонил по рекламе check-up, переживает за отца, спрашивал рассрочку"}),
+   el("div",{class:"row",style:"margin-top:12px"},el("button",{class:"btn pri",id:"nl-save",onclick:async()=>{const v=k=>$("nl-"+k).value.trim();if(!v("name")&&!v("phone")){toast("Укажите имя или телефон");return}
+    const id=uid();const service=v("service");const pr=cfg.prices.find(p=>p.name&&service&&p.name.toLowerCase().includes(service.toLowerCase()));const amount=pr?num(pr.price):NaN;
+    const lead={name:v("name")||"Без имени",phone:v("phone"),service,datetime:v("date"),price:pr?pr.price:"",amount:Number.isFinite(amount)?amount:0,source:srcSel.value,company:cfg.name,niche:cfg.niche,status:v("date")?"booked":"new",createdAt:Date.now(),comment:v("comment"),transcript:[],analysis:null,analysisState:SAMPLE&&v("comment")?"pending":"none",temperature:"",score:0,notes:[],history:[{at:Date.now(),text:"Лид добавлен вручную"}],demo:false};
+    if(await put("leads",id,lead)){openLead(id);if(lead.analysisState==="pending")analyzeLead(id,lead)}}},"Сохранить лида"),
+    el("span",{class:"muted small",text:SAMPLE?"Если заполнить «Что известно», ИИ сразу соберёт карточку.":""})))));openDrawer();$("nl-name").focus()};
+
+/* ---------- реклама ---------- */
+let adFilter="all";
+const pl=s=>{s=String(s||"").toLowerCase();if(/meta|facebook|instagram|fb|инста|фейсб/.test(s))return PLATS[0];if(/tik/.test(s))return PLATS[1];if(/google|гугл/.test(s))return PLATS[2];if(/2gis|2гис/.test(s))return PLATS[3];if(/яндекс|yandex/.test(s))return PLATS[4];if(/vk|вк/.test(s))return PLATS[5];return s?String(s):PLATS[6]};
+$("ad-plat").append(el("option",{value:"",text:"Площадка: из файла"}),...PLATS.map(p=>el("option",{value:p,text:p})));
+$("am-plat").append(...PLATS.map(p=>el("option",{value:p,text:p})));
+const target=()=>{const t=num(store.adset?.targetCpl);return Number.isFinite(t)&&t>0?t:3000};
+function metr(r){const s=r.spend||0;return{ctr:r.impressions?r.clicks/r.impressions:NaN,cpc:r.clicks?s/r.clicks:NaN,cpl:r.leads?s/r.leads:NaN,cr:r.leads?r.sales/r.leads:NaN,romi:s&&num(r.revenue)>0?(num(r.revenue)-s)/s:NaN}}
+function grade(r){const m=metr(r),t=target();if(!r.leads&&r.spend>0)return["bad","Нет лидов ▼"];if(m.cpl<=t*.8)return["good","Масштабировать ▲"];if(m.cpl<=t*1.2)return["acc","В норме ●"];return["bad","Дорогой лид ▼"]}
+function renderAds(){const A=store.ads;const plats=[...new Set(A.map(a=>a.platform))];if(adFilter!=="all"&&!plats.includes(adFilter))adFilter="all";
+ if(document.activeElement!==$("ad-target"))$("ad-target").value=fmt(target());
+ $("ad-filter").replaceChildren(...(plats.length>1?["all",...plats]:[]).map(p=>el("button",{"aria-pressed":adFilter===p,onclick:()=>{adFilter=p;renderAds()}},p==="all"?"Все площадки":p)));
+ const R=A.filter(a=>adFilter==="all"||a.platform===adFilter);const T=R.reduce((s,r)=>{for(const k of["spend","impressions","clicks","leads","sales","revenue"])s[k]+=num(r[k])||0;return s},{spend:0,impressions:0,clicks:0,leads:0,sales:0,revenue:0});const m=metr(T);
+ const st=(k,v,s,cls)=>el("div",{class:"stat"},el("span",{class:"k",text:k}),el("span",{class:"v",text:v}),el("span",{class:"s"},cls?el("span",{class:"chip "+cls,text:s}):s||""));
+ const hasDemo=A.some(a=>a.demo);
+ $("ad-stats").replaceChildren(st("Расход",money(T.spend),R.length+" кампаний"+(hasDemo?" · пример":"")),st("Показы",fmt(T.impressions),"CTR "+pct(m.ctr)),st("Клики",fmt(T.clicks),"CPC "+money(m.cpc)),
+  st("Лиды",fmt(T.leads),"CPL "+money(m.cpl),Number.isFinite(m.cpl)?(m.cpl<=target()?"good":"bad"):null),st("Продажи",fmt(T.sales),"лид → продажа "+pct(m.cr)),st("Выручка",money(T.revenue),"ROMI "+pct(m.romi),Number.isFinite(m.romi)?(m.romi>=0?"good":"bad"):null));
+ // график CPL
+ const bars=$("ad-bars");const withC=R.filter(r=>r.spend>0).map(r=>({r,cpl:metr(r).cpl})).sort((a,b)=>(b.cpl||1e12)-(a.cpl||1e12));
+ if(!withC.length)bars.replaceChildren(el("p",{class:"empty",text:"Загрузите отчёт, чтобы увидеть цену лида по кампаниям."}));
+ else{const max=Math.max(target(),...withC.map(x=>Number.isFinite(x.cpl)?x.cpl:0))*1.18;const tp=target()/max*100;
+  bars.replaceChildren(...withC.map(({r,cpl})=>{const w=Number.isFinite(cpl)?cpl/max*100:0;const over=!Number.isFinite(cpl)||cpl>target();
+   return el("div",{class:"bar-row","data-tip":`${r.campaign}\n${r.platform}\nРасход ${money(r.spend)} · лидов ${fmt(r.leads)}\nCPL ${money(cpl)}`},el("span",{class:"lbl",text:r.campaign}),
+    el("div",{class:"track"},el("div",{class:"fill"+(over?" over":""),style:`width:${w}%`}),el("div",{class:"target",style:`left:${tp}%`}),el("span",{class:"val",style:`left:${Math.min(w,82)}%`,text:Number.isFinite(cpl)?money(cpl):"нет лидов"})))}))}
+ // таблица кампаний
+ const body=$("ad-body");
+ if(mode==="loading")body.replaceChildren(el("tr",null,el("td",{colspan:12,class:"empty",text:"Загружаем кампании…"})));
+ else if(!R.length)body.replaceChildren(el("tr",null,el("td",{colspan:12,class:"empty",text:"Кампаний пока нет. Нажмите «Загрузить отчёт» и вставьте выгрузку из рекламного кабинета."})));
+ else body.replaceChildren(...R.slice().sort((a,b)=>b.spend-a.spend).map(r=>{const mm=metr(r),g=grade(r);return el("tr",null,el("td",{class:"small",text:r.platform}),el("td",null,el("b",{text:r.campaign}),r.demo?el("span",{class:"tag",style:"margin-left:6px"},"пример"):null,r.period?el("div",{class:"muted small",text:r.period}):null),
+  el("td",{class:"r",text:money(r.spend)}),el("td",{class:"r",text:fmt(r.impressions)}),el("td",{class:"r",text:pct(mm.ctr)}),el("td",{class:"r",text:money(mm.cpc)}),el("td",{class:"r",text:fmt(r.leads)}),el("td",{class:"r",text:money(mm.cpl)}),el("td",{class:"r",text:fmt(r.sales)}),el("td",{class:"r",text:pct(mm.romi)}),
+  el("td",null,el("span",{class:"chip "+g[0],text:g[1]})),el("td",null,el("button",{class:"btn ghost","aria-label":"Удалить кампанию",title:"Удалить кампанию",onclick:()=>remove("ads",r.id)},"✕")))}));
+ if(hasDemo&&!$("ad-demo-row")){body.append(el("tr",{id:"ad-demo-row"},el("td",{colspan:12},el("div",{class:"row",style:"justify-content:space-between"},el("span",{class:"muted small",text:"Это пример данных. Загрузите свой отчёт и удалите примеры."}),el("button",{class:"btn",onclick:async()=>{for(const a of store.ads.filter(a=>a.demo))await remove("ads",a.id)}},"Удалить примеры")))))}
+ // источники из CRM
+ const by={};for(const l of store.leads){const k=l.source||"—";(by[k]=by[k]||{n:0,b:0,w:0,s:0}).n++;if(["booked","confirmed","came","won"].includes(l.status))by[k].b++;if(l.status==="won"){by[k].w++;by[k].s+=l.amount||0}}
+ const src=Object.entries(by).sort((a,b)=>b[1].n-a[1].n);
+ $("ad-src").replaceChildren(...(src.length?src.map(([k,v])=>el("tr",null,el("td",{class:"small",text:k}),el("td",{class:"r",text:fmt(v.n)}),el("td",{class:"r",text:fmt(v.b)}),el("td",{class:"r",text:fmt(v.w)}),el("td",{class:"r",text:money(v.s)}))):[el("tr",null,el("td",{colspan:5,class:"empty",text:"Лиды появятся здесь, когда бот начнёт записывать клиентов."}))]));
+ renderReport()}
+// подсказка на графике
+$("ad-bars").addEventListener("pointermove",e=>{const r=e.target.closest(".bar-row");const tip=$("tip");if(!r){tip.hidden=true;return}tip.textContent="";r.dataset.tip.split("\n").forEach((l,i)=>tip.append(i?el("div",{text:l}):el("b",{text:l})));tip.hidden=false;const x=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8);tip.style.left=x+"px";tip.style.top=(e.clientY+14)+"px"});
+$("ad-bars").addEventListener("pointerleave",()=>$("tip").hidden=true);
+$("ad-target").onchange=e=>{const v=num(e.target.value);if(Number.isFinite(v)&&v>0){store.adset={targetCpl:v};setDoc("settings/ads","adset",{targetCpl:v});renderAds()}};
+$("ad-imp-toggle").onclick=()=>{$("ad-imp").hidden=!$("ad-imp").hidden};
+
+const AD_COLS=[["campaign",/кампан|campaign|назван|объявлен|ad set|группа|креатив/i],["platform",/площад|platform|канал|источник|source|network|сеть/i],["period",/период|дата|date|day|день|reporting|начал/i],["spend",/расход|потрач|spent|spend|cost|затрат|бюджет|сумма/i],["impressions",/показ|impress/i],["clicks",/клик|click|переход/i],["leads",/лид|lead|заявк|результат|result|конверс|conversion|обращ/i],["sales",/продаж|sale|покуп|purchase|оплат|сделк/i],["revenue",/выручк|revenue|доход|ценност|value/i]];
+const SKIP=/( за |per |^cp[cmla]|cp[cmla]\b|ctr|частот|frequency|охват|reach|%|стоимость за|цена за)/i;
+function parseAds(text,plat){const lines=text.replace(/\r/g,"").split("\n").filter(l=>l.trim());if(!lines.length)return[];
+ const d=["\t",";",","].map(s=>[s,splitCells(lines[0],s).length]).sort((a,b)=>b[1]-a[1])[0][0];const rows=lines.map(l=>splitCells(l,d));
+ let hi=-1,map={};for(let i=0;i<Math.min(rows.length,15);i++){const mp={};rows[i].forEach((h,j)=>{if(!h||SKIP.test(h))return;for(const[k,re]of AD_COLS)if(!(k in mp)&&re.test(h)){mp[k]=j;break}});if(Object.keys(mp).length>=3&&"spend" in mp){hi=i;map=mp;break}}
+ if(hi<0)return[];const out=[];
+ for(const r of rows.slice(hi+1)){const g=k=>k in map?r[map[k]]:"";const name=g("campaign");if(!name||/^(итого|всего|total)/i.test(name))continue;const spend=num(g("spend"));if(!Number.isFinite(spend))continue;
+  const n=k=>{const v=num(g(k));return Number.isFinite(v)?v:0};out.push({platform:plat||pl(g("platform")),campaign:name,period:g("period"),spend,impressions:n("impressions"),clicks:n("clicks"),leads:n("leads"),sales:n("sales"),revenue:n("revenue")})}
+ return out}
+let adPending=[];
+function showAdPreview(rows){adPending=rows;const m=$("ad-msg");m.replaceChildren();if(!rows.length){m.textContent="Не нашёл колонку расхода и названия кампаний. Попробуйте «Распознать с ИИ».";return}
+ m.append(`Найдено кампаний: ${rows.length}, расход ${money(rows.reduce((s,r)=>s+r.spend,0))}, лидов ${fmt(rows.reduce((s,r)=>s+r.leads,0))}. `,el("button",{class:"btn pri",style:"margin-top:6px",onclick:async()=>{for(const r of adPending)await put("ads",uid(),{...r,createdAt:Date.now(),demo:false});m.textContent=`Добавлено кампаний: ${adPending.length}.`;adPending=[];$("ad-paste").value=""}},"Добавить в дашборд"))}
+$("ad-parse").onclick=()=>showAdPreview(parseAds($("ad-paste").value,$("ad-plat").value));
+$("ad-file").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{$("ad-paste").value=await readFile(f);showAdPreview(parseAds($("ad-paste").value,$("ad-plat").value))}catch{$("ad-msg").textContent="Не удалось прочитать файл. Сохраните его как CSV и попробуйте снова."}e.target.value=""};
+$("ad-parse-ai").onclick=async()=>{const t=$("ad-paste").value.trim();if(!t){$("ad-msg").textContent="Сначала вставьте таблицу или выберите файл.";return}if(!SAMPLE){$("ad-msg").textContent="ИИ-распознавание работает, когда страница открыта в Claude.";return}
+ $("ad-msg").textContent="ИИ читает отчёт…";try{const r=await SAMPLE.json(`Извлеки рекламные кампании из отчёта ниже. Числа переноси точно, без пробелов и валюты. Если показателя нет — 0. Строки «Итого» пропусти. platform — одна из: ${PLATS.join(", ")}.
+Верни JSON: {"rows":[{"platform":"","campaign":"","period":"","spend":0,"impressions":0,"clicks":0,"leads":0,"sales":0,"revenue":0}]}
+
+ОТЧЁТ:
+${t.slice(0,24000)}`,{modelTier:"default"});
+  showAdPreview((r.rows||[]).filter(x=>x&&x.campaign).map(x=>({platform:$("ad-plat").value||pl(x.platform),campaign:String(x.campaign),period:String(x.period||""),spend:num(x.spend)||0,impressions:num(x.impressions)||0,clicks:num(x.clicks)||0,leads:num(x.leads)||0,sales:num(x.sales)||0,revenue:num(x.revenue)||0})))}
+ catch(e){$("ad-msg").textContent=e?.code==="rate_limited"?"Слишком много запросов, подождите минуту.":"Не удалось распознать отчёт."}};
+$("am-add").onclick=async()=>{const v=id=>$(id).value.trim();if(!v("am-name")||!Number.isFinite(num(v("am-spend")))){toast("Укажите название кампании и расход");return}
+ const n=id=>{const x=num(v(id));return Number.isFinite(x)?x:0};
+ if(await put("ads",uid(),{platform:$("am-plat").value,campaign:v("am-name"),period:v("am-period"),spend:n("am-spend"),impressions:n("am-imp"),clicks:n("am-clk"),leads:n("am-leads"),sales:n("am-sales"),revenue:n("am-rev"),createdAt:Date.now(),demo:false})){["am-name","am-period","am-spend","am-imp","am-clk","am-leads","am-sales","am-rev"].forEach(id=>$(id).value="");toast("Кампания добавлена")}};
+
+/* разбор от ИИ */
+let repId=null;
+$("ad-ai").onclick=async()=>{const R=store.ads.filter(a=>adFilter==="all"||a.platform===adFilter);if(!R.length){toast("Сначала загрузите отчёт по рекламе");return}
+ if(!SAMPLE){toast("Разбор работает, когда страница открыта в Claude");return}
+ const btn=$("ad-ai");btn.disabled=true;btn.textContent="ИИ анализирует…";$("ad-report").replaceChildren(el("p",{class:"muted",text:"Считаю показатели и готовлю рекомендации…"}),el("div",{class:"skel",style:"width:85%;margin-top:10px"}),el("div",{class:"skel",style:"width:60%;margin-top:8px"}));
+ const lines=R.map(r=>{const m=metr(r);return `- ${r.platform} | ${r.campaign}${r.period?" | "+r.period:""} | расход ${fmt(r.spend)} ₸ | показы ${fmt(r.impressions)} | клики ${fmt(r.clicks)} | CTR ${pct(m.ctr)} | CPC ${money(m.cpc)} | лиды ${fmt(r.leads)} | CPL ${money(m.cpl)} | продажи ${fmt(r.sales)} | выручка ${money(r.revenue)} | ROMI ${pct(m.romi)}`}).join("\n");
+ const by={};for(const l of store.leads.filter(l=>!l.demo)){const k=l.source||"—";(by[k]=by[k]||{n:0,b:0,w:0}).n++;if(["booked","confirmed","came","won"].includes(l.status))by[k].b++;if(l.status==="won")by[k].w++}
+ const crm=Object.entries(by).map(([k,v])=>`- ${k}: лидов ${v.n}, записаны ${v.b}, оплатили ${v.w}`).join("\n")||"(данных CRM пока нет)";
+ try{const rep=await SAMPLE.json(`Ты — сильный таргетолог и аналитик performance-маркетинга в Казахстане. Сделай разбор рекламы для собственника бизнеса: просто, конкретно, с цифрами.
+Компания: «${cfg.name}», ниша: ${NICHE[cfg.niche].label}. Целевая цена лида: ${fmt(target())} ₸.
+Прайс-лист (для расчёта среднего чека и окупаемости):
+${priceText(cfg.prices)}
+
+КАМПАНИИ:
+${lines}
+
+ЛИДЫ В CRM ПО ИСТОЧНИКАМ:
+${crm}
+
+Правила: опирайся только на эти цифры, не выдумывай данные. Если данных мало для вывода — так и скажи. Рекомендации — конкретные действия (что отключить, куда перенести сколько бюджета, что протестировать в креативах и аудиториях).
+Верни JSON:
+{"summary":"3–4 предложения: главный вывод по деньгам","verdict":[{"campaign":"название","action":"масштабировать|оставить|оптимизировать|отключить","why":"коротко, с цифрами"}],"budget":"как перераспределить бюджет, с суммами","creatives":["гипотеза для креативов или аудиторий"],"funnel":"что видно по конверсии лид → запись → оплата и что сделать отделу продаж","plan":["действие на ближайшую неделю"]}`,{modelTier:"complex"});
+  const id=uid();await put("reports",id,{...rep,createdAt:Date.now(),scope:adFilter==="all"?"Все площадки":adFilter,spend:R.reduce((s,r)=>s+r.spend,0)});repId=id;renderReport()}
+ catch(e){$("ad-report").replaceChildren(el("p",{class:"muted",text:e?.code==="rate_limited"?"Слишком много запросов, подождите минуту и повторите.":"Не удалось подготовить разбор. Попробуйте ещё раз."}))}
+ btn.disabled=false;btn.textContent="Разбор от ИИ"};
+function renderReport(){const reps=store.reports.slice().sort((a,b)=>b.createdAt-a.createdAt);const pick=$("ad-rep-pick");const box=$("ad-report");
+ if(btnBusy())return;
+ if(!reps.length){pick.hidden=true;box.replaceChildren(el("p",{class:"muted",text:"Нажмите «Разбор от ИИ»: он оценит каждую кампанию, предложит, куда перенести бюджет, и сверит рекламу с оплатами в CRM."}));return}
+ if(!reps.some(r=>r.id===repId))repId=reps[0].id;pick.hidden=reps.length<2;pick.replaceChildren(...reps.map(r=>el("option",{value:r.id,selected:r.id===repId,text:dt(r.createdAt)+" · "+(r.scope||"")})));pick.onchange=e=>{repId=e.target.value;renderReport()};
+ const r=reps.find(x=>x.id===repId);const act={"масштабировать":"good","оставить":"acc","оптимизировать":"warn","отключить":"bad"};
+ box.replaceChildren(el("div",{class:"report"},el("p",{class:"muted small",text:`Разбор от ${dt(r.createdAt)} · ${r.scope||""} · расход ${money(r.spend)}`+(r.demo?" · пример":"")}),el("p",{text:r.summary||""}),
+  Array.isArray(r.verdict)&&r.verdict.length?el("div",{class:"tbl"},el("table",null,el("thead",null,el("tr",null,el("th",null,"Кампания"),el("th",null,"Решение"),el("th",null,"Почему"))),el("tbody",null,r.verdict.map(v=>el("tr",null,el("td",null,el("b",{text:v.campaign||""})),el("td",null,el("span",{class:"chip "+(act[v.action]||""),text:v.action||""})),el("td",{class:"small",text:v.why||""})))))):null,
+  el("div",{class:"two"},el("div",{class:"sec"},el("h3",{text:"Бюджет"}),el("p",{text:r.budget||"—"})),el("div",{class:"sec"},el("h3",{text:"Воронка и продажи"}),el("p",{text:r.funnel||"—"}))),
+  el("div",{class:"two"},el("div",{class:"sec"},el("h3",{text:"Креативы и аудитории"}),list(r.creatives)),el("div",{class:"sec"},el("h3",{text:"План на неделю"}),list(r.plan)))))}
+const btnBusy=()=>$("ad-ai").disabled;
+
+/* ---------- вкладки ---------- */
+function showTab(t){document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));["bot","prices","crm","ads"].forEach(v=>$("v-"+v).hidden=v!==t);ls.set("altim-tab",t);scrollTo(0,0)}
+document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function renderData(){renderCRM();renderAds();if(openId)renderCard(false)}
+function setMode(m){mode=m;$("mode").textContent=m==="db"?"Общая база команды":m==="local"?"Данные только в этом браузере":"Подключаем данные…";$("mode").title=m==="local"?"Откройте страницу в Claude, чтобы лиды и отчёты видела вся команда":""}
+
+/* ---------- запуск ---------- */
+applyConfig();renderData();
+{const h=location.hash.slice(1);const t=["bot","prices","crm","ads"].includes(h)?h:ls.get("altim-tab");if(["bot","prices","crm","ads"].includes(t))showTab(t)}
+const use=n=>{try{return window.claude?.use?Promise.resolve(window.claude.use(n)).catch(()=>null):Promise.resolve(null)}catch{return Promise.resolve(null)}};
+use("sample").then(s=>{SAMPLE=s;if(chat&&!chat.hist.some(h=>h[0]==="Клиент"))$("note").textContent=s?"Тестовый режим: до 30 сообщений в диалоге.":"Ответы бота работают, когда страница открыта в Claude."});
+use("db").then(db=>{if(!db){setMode("local");const v=ls.get(LSK);if(v){Object.assign(store,{config:v.config||null,leads:v.leads||[],ads:v.ads||[],reports:v.reports||[],adset:v.adset||null})}if(store.config&&!cfgDirty)applyConfig();renderData();return}
+ DB=db;setMode("db");const bad=e=>{if(e&&e.code==="revoked")setMode("local")};
+ db.doc("config/company").onSnapshot(s=>{if(s.exists){store.config=s.data();if(!cfgDirty)applyConfig()}},bad);
+ db.doc("settings/ads").onSnapshot(s=>{store.adset=s.exists?s.data():null;renderAds()},bad);
+ db.collection("leads").orderBy("createdAt","desc").onSnapshot(q=>{store.leads=q.docs.map(d=>({...d.data(),id:d.id}));renderData()},bad);
+ db.collection("ads").onSnapshot(q=>{store.ads=q.docs.map(d=>({...d.data(),id:d.id}));renderAds()},bad);
+ db.collection("reports").orderBy("createdAt","desc").limit(20).onSnapshot(q=>{store.reports=q.docs.map(d=>({...d.data(),id:d.id}));renderReport()},bad);
+ renderData()});
+</script>

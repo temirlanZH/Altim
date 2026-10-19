@@ -1,0 +1,490 @@
+<title>ALTIM AI</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="ALTIM AI — ИИ-менеджер продаж для WhatsApp, Instagram и Telegram. Отвечает 24/7 по вашему прайсу, записывает клиентов и передаёт отделу продаж карточку лида.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: широкие полосы на всю ширину с внутренней колонкой 1160px; герой — тезис слева и живой диалог с карточкой лида справа; одна тёмная полоса для кейсов */
+:root{
+ --bg:#F3F7F7;--surface:#FFFFFF;--sunk:#E6EFF0;--ink:#0A262C;--muted:#52707A;--line:#D3E3E6;
+ --accent:#00819A;--accent-ink:#FFFFFF;--gold:#C99700;--bubble:#DDF1F5;
+ --deep:#0A3640;--on-deep:#EAF6F8;--on-deep-muted:#9DC3CB;--deep-line:#1C5361;
+ --good:#1C7C4E;--bad:#B3261E;--shadow:0 24px 60px -24px rgba(10,38,44,.35);
+ --f-display:Unbounded,"Arial Black",system-ui,sans-serif;
+ --f-body:Manrope,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#061619;--surface:#0D2328;--sunk:#0A1D21;--ink:#E3F1F3;--muted:#8BA8B0;--line:#1F3C43;--accent:#3CC6E0;--accent-ink:#04232A;--gold:#F2C230;--bubble:#123A43;--deep:#0B2C33;--on-deep:#E3F1F3;--on-deep-muted:#8FB6BE;--deep-line:#1F4A54;--good:#5FD39A;--bad:#F2A19B;--shadow:0 24px 60px -24px rgba(0,0,0,.7);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#061619;--surface:#0D2328;--sunk:#0A1D21;--ink:#E3F1F3;--muted:#8BA8B0;--line:#1F3C43;--accent:#3CC6E0;--accent-ink:#04232A;--gold:#F2C230;--bubble:#123A43;--deep:#0B2C33;--on-deep:#E3F1F3;--on-deep-muted:#8FB6BE;--deep-line:#1F4A54;--good:#5FD39A;--bad:#F2A19B;--shadow:0 24px 60px -24px rgba(0,0,0,.7);color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 var(--f-body)}
+.in{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+section{padding-block:88px}
+h1,h2,h3{margin:0;text-wrap:balance}
+h1{font:700 clamp(32px,5.2vw,58px)/1.08 var(--f-display);letter-spacing:-.02em}
+h2{font:700 clamp(26px,3.4vw,40px)/1.15 var(--f-display);letter-spacing:-.015em}
+h3{font-size:18px;font-weight:800;line-height:1.3}
+p{margin:0}
+a{color:inherit}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.lead{font-size:18px;color:var(--muted);max-width:60ch}
+.shead{display:flex;flex-direction:column;gap:14px;max-width:760px;margin-bottom:44px}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:13px 20px;font-weight:700;font-size:15px;text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{filter:brightness(1.07)}
+.btn.sm{padding:8px 14px;font-size:14px;border-radius:10px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--sunk);white-space:nowrap}
+.chip::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.chip.on::before{background:var(--good)}
+.chip.soon::before{background:var(--gold)}
+.chip.hot::before{background:var(--bad)}
+
+/* шапка */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .in{display:flex;align-items:center;gap:28px;padding-block:12px}
+.logo{font:700 19px/1 var(--f-display);text-decoration:none;letter-spacing:-.01em;white-space:nowrap}
+.logo span{color:var(--gold)}
+nav.menu{display:flex;gap:22px;flex:1}
+nav.menu a{text-decoration:none;font-weight:600;font-size:15px;color:var(--muted)}
+nav.menu a:hover{color:var(--ink)}
+@media (max-width:900px){nav.menu{display:none}.top .in{justify-content:space-between}}
+@media (max-width:420px){.top .btn.ghost-m{display:none}}
+
+/* герой */
+.hero{padding-block:64px 80px}
+.hero .in{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:56px;align-items:center}
+@media (max-width:960px){.hero .in{grid-template-columns:minmax(0,1fr)}}
+.hero-text{display:flex;flex-direction:column;gap:24px}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.ctas{display:flex;gap:12px;flex-wrap:wrap}
+.proof{display:flex;gap:28px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--line)}
+.proof div{display:flex;flex-direction:column}
+.proof b{font:700 24px/1.2 var(--f-display)}
+.proof span{font-size:13px;color:var(--muted)}
+.stage{position:relative;padding-bottom:64px}
+.wa{background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;max-width:470px;margin-left:auto}
+@media (max-width:960px){.wa{margin:0 auto}}
+.wa-head{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ava{width:38px;height:38px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font:700 14px var(--f-display);flex:none}
+.wa-head b{display:block;font-size:15px}
+.wa-head small{color:var(--good);font-weight:700;font-size:12px}
+.wa-log{padding:16px;display:flex;flex-direction:column;gap:8px;background:var(--sunk)}
+.b{max-width:84%;padding:9px 12px;border-radius:14px;font-size:14px;line-height:1.5;background:var(--surface);align-self:flex-start;border-bottom-left-radius:4px;white-space:pre-wrap;overflow-wrap:anywhere}
+.b.c{align-self:flex-end;background:var(--bubble);border-bottom-left-radius:14px;border-bottom-right-radius:4px}
+.b time{display:block;font-size:11px;color:var(--muted);text-align:right;margin-top:2px}
+.leadcard{position:absolute;left:0;bottom:0;width:min(330px,86%);background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+@media (max-width:960px){.leadcard{left:50%;transform:translateX(-50%)}}
+.leadcard .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.leadcard h4{margin:0;font-size:16px}
+.meter{height:6px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.tagline{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){
+ .wa-log .b{animation:pop .45s ease backwards}
+ .wa-log .b:nth-child(2){animation-delay:.15s}.wa-log .b:nth-child(3){animation-delay:.3s}.wa-log .b:nth-child(4){animation-delay:.45s}.wa-log .b:nth-child(5){animation-delay:.6s}.wa-log .b:nth-child(6){animation-delay:.75s}
+ .leadcard{animation:rise .6s .95s ease backwards}
+ @keyframes pop{from{opacity:0;transform:translateY(6px)}}
+ @keyframes rise{from{opacity:0;translate:0 14px}}
+}
+
+/* потери */
+.loss{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media (max-width:1000px){.loss{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.loss{grid-template-columns:minmax(0,1fr)}}
+.loss article{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px}
+.loss .was{font-size:14px;color:var(--muted)}
+.loss .now{font-size:14px;padding-top:12px;border-top:1px dashed var(--line)}
+.loss .now b{color:var(--accent)}
+
+/* инструменты */
+.tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+@media (max-width:960px){.tools{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.tools{grid-template-columns:minmax(0,1fr)}}
+.tool{background:var(--surface);padding:24px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.tool p{font-size:15px;color:var(--muted)}
+.tool ul{margin:0;padding-left:18px;font-size:14px;color:var(--muted)}
+.tools-note{margin-top:16px;font-size:14px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
+
+/* шаги */
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;counter-reset:s}
+@media (max-width:900px){.steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.steps{grid-template-columns:minmax(0,1fr)}}
+.steps li{list-style:none;display:flex;flex-direction:column;gap:8px;padding-top:18px;border-top:2px solid var(--ink)}
+.steps li::before{counter-increment:s;content:"0" counter(s);font:700 14px var(--f-display);color:var(--accent)}
+.steps p{font-size:15px;color:var(--muted)}
+ol.steps{padding:0;margin:0}
+
+/* демо */
+#demo{background:var(--sunk);border-block:1px solid var(--line)}
+.demo{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.demo{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line);background:var(--surface);padding:7px 13px;border-radius:99px;font-size:13px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+label{display:block;font-size:13px;font-weight:700;margin:14px 0 6px}
+input,textarea{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;font-size:14px}
+textarea{min-height:120px;resize:vertical}
+.hint{font-size:12px;color:var(--muted);margin-top:6px}
+.chat{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;min-width:0}
+.chat .wa-log{min-height:340px;max-height:520px;overflow-y:auto}
+.quick{display:flex;gap:6px;flex-wrap:wrap;padding:10px 14px 0}
+.quick button{border:1px dashed var(--line);background:none;border-radius:99px;padding:5px 11px;font-size:13px;cursor:pointer}
+.send{display:flex;gap:8px;padding:12px 14px}
+.send input{flex:1;min-width:0}
+.note{font-size:12px;color:var(--muted);padding:0 14px 12px}
+.sys{align-self:stretch;border:1px solid color-mix(in srgb,var(--good) 45%,var(--line));background:color-mix(in srgb,var(--good) 10%,var(--surface));border-radius:12px;padding:10px 12px;font-size:13px}
+.dots{display:inline-flex;gap:4px;padding:4px 0}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:bl 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,60%,100%{opacity:.3}30%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.dots i{animation:none}}
+.card-out{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.card-out .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+@media (max-width:600px){.card-out .grid2{grid-template-columns:minmax(0,1fr)}}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:14px;display:flex;flex-direction:column;gap:6px}
+.box ul{margin:0;padding-left:18px}
+.full{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-top:24px;padding:18px 22px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+
+/* кейсы — тёмная полоса */
+#cases{background:var(--deep);color:var(--on-deep)}
+#cases .eyebrow{color:var(--gold)}
+#cases .lead{color:var(--on-deep-muted)}
+.cases{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--deep-line);border:1px solid var(--deep-line);border-radius:18px;overflow:hidden}
+@media (max-width:800px){.cases{grid-template-columns:minmax(0,1fr)}}
+.case{background:var(--deep);padding:26px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.case .ind{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--on-deep-muted)}
+.case h3{font:700 22px/1.2 var(--f-display)}
+.case p{color:var(--on-deep-muted);font-size:15px}
+.metrics{display:flex;gap:28px;flex-wrap:wrap}
+.metrics div{display:flex;flex-direction:column}
+.metrics b{font:700 34px/1.1 var(--f-display);color:var(--gold);font-variant-numeric:tabular-nums}
+.metrics span{font-size:13px;color:var(--on-deep-muted);max-width:18ch}
+.did{display:flex;gap:6px;flex-wrap:wrap}
+.did span{font-size:12px;border:1px solid var(--deep-line);border-radius:99px;padding:2px 9px;color:var(--on-deep)}
+.cases-note{margin-top:18px;font-size:13px;color:var(--on-deep-muted)}
+
+/* сравнение */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:15px}
+th,td{padding:14px 18px;border-bottom:1px solid var(--line);text-align:left}
+th{font-size:13px;color:var(--muted);font-weight:700}
+th.us{color:var(--accent)}
+td.c{text-align:center;width:150px}
+th.c{text-align:center}
+tr:last-child td{border-bottom:0}
+.y{color:var(--good);font-weight:800}.n{color:var(--muted)}.p{color:var(--muted);font-size:13px}
+td.us{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+
+/* интеграции */
+.integr{display:flex;gap:10px;flex-wrap:wrap}
+.integr span{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 16px;font-weight:700;font-size:15px}
+.integr span small{display:block;font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.04em;text-transform:uppercase}
+
+/* FAQ */
+.faq{display:flex;flex-direction:column;border-top:1px solid var(--line);max-width:860px}
+.faq details{border-bottom:1px solid var(--line);padding:18px 0}
+.faq summary{cursor:pointer;font-weight:800;font-size:17px;list-style:none;display:flex;justify-content:space-between;gap:16px}
+.faq summary::after{content:"+";font:700 20px/1 var(--f-display);color:var(--accent)}
+.faq details[open] summary::after{content:"–"}
+.faq p{margin-top:10px;color:var(--muted);max-width:70ch}
+
+/* финал */
+.final{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:48px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:32px;align-items:center}
+@media (max-width:800px){.final{grid-template-columns:minmax(0,1fr);padding:28px}}
+.contact{display:flex;flex-direction:column;gap:10px}
+.phone{font:700 22px/1.2 var(--f-display);font-variant-numeric:tabular-nums;user-select:all}
+footer{padding-block:40px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+footer .in{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:50;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px}
+</style>
+
+<header class="top"><div class="in">
+ <a class="logo" href="#top">ALTIM <span>AI</span></a>
+ <nav class="menu" aria-label="Разделы"><a href="#tools">Платформа</a><a href="#demo">Демо-бот</a><a href="#cases">Кейсы</a><a href="#compare">Сравнение</a><a href="#faq">Вопросы</a></nav>
+ <a class="btn sm ghost-m" href="#demo">Попробовать бота</a>
+ <a class="btn sm pri" href="https://wa.me/996705051110" target="_blank" rel="noopener">Обсудить проект</a>
+</div></header>
+
+<main id="top">
+<section class="hero"><div class="in">
+ <div class="hero-text">
+  <span class="eyebrow">Платформа ИИ-продаж для бизнеса Казахстана и Кыргызстана</span>
+  <h1>ИИ-менеджер, который отвечает клиентам <em>24/7</em> и записывает их за вас</h1>
+  <p class="lead">ALTIM AI ведёт диалог в WhatsApp, Instagram и Telegram по вашему прайсу, доводит клиента до записи или заказа и передаёт отделу продаж готовую карточку лида. Переписки, сделки и отчёты собираются в одном месте.</p>
+  <div class="ctas"><a class="btn pri" href="#demo">Попробовать бота за 2 минуты</a><a class="btn" href="https://wa.me/996705051110" target="_blank" rel="noopener">Обсудить внедрение</a></div>
+  <div class="proof">
+   <div><b class="num">50+</b><span>внедрений автоматизации</span></div>
+   <div><b class="num">100 000+</b><span>диалогов обработано ботами</span></div>
+   <div><b>amoCRM · Битрикс24</b><span>официальный партнёр</span></div>
+  </div>
+ </div>
+ <div class="stage" aria-label="Пример диалога ИИ-менеджера с клиентом">
+  <div class="wa">
+   <div class="wa-head"><div class="ava">Ш</div><div><b>Клиника «Шипагер»</b><small>ИИ-менеджер · онлайн</small></div><span class="tagline" style="margin-left:auto">пример</span></div>
+   <div class="wa-log">
+    <div class="b c">Здравствуйте, увидела рекламу check-up сердца. Сколько стоит?<time>23:41</time></div>
+    <div class="b">Здравствуйте! Check-up «Сердце» стоит 35 000 ₸: ЭКГ, УЗИ сердца, анализы и приём кардиолога за один визит. Как к вам обращаться?<time>23:41</time></div>
+    <div class="b c">Айгерим. Дороговато, подумаю<time>23:42</time></div>
+    <div class="b">Понимаю, Айгерим. По отдельности эти обследования выйдут дороже, а здесь кардиолог сразу даст заключение. Можно оплатить в рассрочку Kaspi Red. Удобнее в субботу в 10:00 или в понедельник в 17:00?<time>23:42</time></div>
+    <div class="b c">Суббота подойдёт, +7 707 ··· ·· 14<time>23:43</time></div>
+    <div class="b">Готово, Айгерим, вы записаны на субботу, 10:00, пр. Кабанбай батыра 10. Накануне пришлём напоминание. До встречи!<time>23:43</time></div>
+   </div>
+  </div>
+  <div class="leadcard">
+   <div class="row"><span class="tagline">Новый лид в CRM</span><span class="chip hot">горячий</span></div>
+   <h4>Айгерим · Check-up «Сердце»</h4>
+   <div class="row muted"><span>Сб, 10:00</span><span class="num">35 000 ₸</span></div>
+   <div class="row"><span class="muted">Вероятность оплаты</span><b class="num">82%</b></div>
+   <div class="meter"><i style="width:82%"></i></div>
+   <span>Возражение «дорого» снято рассрочкой. Шаг: позвонить в пятницу и подтвердить.</span>
+  </div>
+ </div>
+</div></section>
+
+<section id="loss" style="padding-top:24px"><div class="in">
+ <div class="shead"><span class="eyebrow">Где теряются заявки</span><h2>Реклама приводит клиентов круглосуточно. Отдел продаж работает до шести</h2></div>
+ <div class="loss">
+  <article><h3>Ответ через час</h3><p class="was">Клиент написал в 23:40, менеджер ответил утром. К этому времени он уже записался к конкурентам.</p><p class="now"><b>С ALTIM:</b> бот отвечает за секунды днём и ночью, в выходные и праздники.</p></article>
+  <article><h3>«Цена по запросу»</h3><p class="was">Менеджер уточняет цену у коллег, клиент теряет интерес. Или называет неправильную.</p><p class="now"><b>С ALTIM:</b> бот называет цены только из вашего прайса и объясняет, что в них входит.</p></article>
+  <article><h3>Лид не попал в CRM</h3><p class="was">Переписка осталась в телефоне менеджера. Руководитель не видит, сколько было обращений.</p><p class="now"><b>С ALTIM:</b> сделка и карточка лида создаются сами, вместе с перепиской и итогом.</p></article>
+  <article><h3>Никто не дожал</h3><p class="was">Клиент сказал «подумаю», и про него забыли. Половина тёплых лидов уходит так.</p><p class="now"><b>С ALTIM:</b> бот отрабатывает возражения, а карточка подсказывает менеджеру следующий шаг.</p></article>
+ </div>
+</div></section>
+
+<section id="tools" style="padding-top:24px"><div class="in">
+ <div class="shead"><span class="eyebrow">Инструменты платформы</span><h2>Всё, что нужно, чтобы заявка дошла до оплаты</h2><p class="lead">Начинаем с ИИ-менеджера и CRM, дальше подключаем аналитику рекламы, оплаты и звонки. Каждый инструмент работает отдельно и вместе с остальными.</p></div>
+ <div class="tools">
+  <article class="tool"><span class="chip on">работает</span><h3>ИИ-менеджер в WhatsApp и Telegram</h3><p>Квалифицирует клиента, отвечает 24/7, отрабатывает возражения, записывает на приём или встречу и передаёт диалог менеджеру.</p></article>
+  <article class="tool"><span class="chip on">работает</span><h3>Ответы по вашему прайс-листу</h3><p>Загрузите прайс из Excel, Google Таблиц или текстом. Бот предлагает подходящие позиции и не выдумывает цены, скидки и акции.</p></article>
+  <article class="tool"><span class="chip on">работает</span><h3>Карточка лида от ИИ</h3><p>После записи ИИ разбирает переписку: потребность, возражения, бюджет, допродажи из прайса, риски неявки и скрипт звонка-подтверждения.</p></article>
+  <article class="tool"><span class="chip on">работает</span><h3>CRM под ваш процесс</h3><p>Настраиваем amoCRM и Битрикс24 как официальный партнёр: воронки, распределение лидов, задачи, автоматизации.</p></article>
+  <article class="tool"><span class="chip on">работает</span><h3>Телефония и разбор звонков</h3><p>Запись, расшифровка и ИИ-оценка каждого разговора: качество по скрипту, потребности клиента и подсказка менеджеру в карточке сделки.</p></article>
+  <article class="tool"><span class="chip on">работает</span><h3>1С, календарь и отчёты</h3><p>Сделка превращается в документы в 1С, запись попадает в Google Календарь, руководитель получает отчёт в Telegram без запроса.</p></article>
+  <article class="tool"><span class="chip soon">в разработке</span><h3>Аналитика рекламы Meta</h3><p>Расход, лиды и цена лида из рекламного кабинета рядом с оплатами из CRM. Видно, какой креатив принёс деньги, а какой только клики.</p></article>
+  <article class="tool"><span class="chip soon">в разработке</span><h3>Instagram Direct и дожимы</h3><p>Ответы в Direct, общий инбокс для команды, автоматическое возвращение клиентов, которые замолчали.</p></article>
+  <article class="tool"><span class="chip soon">в разработке</span><h3>Оплата прямо в чате</h3><p>Счёт Kaspi или Halyk выставляется из диалога, статус оплаты возвращается в переписку и в CRM.</p></article>
+ </div>
+ <div class="tools-note"><span><span class="chip on">работает</span> уже внедряем клиентам</span><span><span class="chip soon">в разработке</span> выходит в 2026 году: также ИИ-звонки и кабинет для агентств</span></div>
+</div></section>
+
+<section id="how" style="padding-top:24px"><div class="in">
+ <div class="shead"><span class="eyebrow">Как запускаем</span><h2>От прайса до первых записей</h2></div>
+ <ol class="steps">
+  <li><h3>Изучаем процесс</h3><p>Смотрим каналы, CRM и где теряются клиенты. Собираем прайс, условия и частые вопросы.</p></li>
+  <li><h3>Обучаем ИИ-менеджера</h3><p>Пишем скрипт продаж под вашу нишу. Вы проверяете ответы в тестовом чате до подключения.</p></li>
+  <li><h3>Подключаем каналы</h3><p>WhatsApp, Telegram и CRM. Сделки, записи и карточки лидов начинают создаваться сами.</p></li>
+  <li><h3>Смотрим на цифры</h3><p>Конверсия из диалога в запись, скорость ответа, нагрузка на менеджеров. Дорабатываем по реальным перепискам.</p></li>
+ </ol>
+</div></section>
+
+<section id="demo"><div class="in">
+ <div class="shead"><span class="eyebrow">Демо-бот</span><h2>Проверьте, как ИИ-менеджер продаёт за ваш бизнес</h2><p class="lead">Выберите нишу, вставьте свой прайс и напишите боту как клиент. Когда он вас запишет, ИИ соберёт карточку лида для отдела продаж.</p></div>
+ <div class="demo">
+  <div class="panel">
+   <div class="seg" role="group" aria-label="Ниша" id="niches">
+    <button data-n="clinic" aria-pressed="true">Клиника</button><button data-n="goods" aria-pressed="false">Товары</button><button data-n="school" aria-pressed="false">Онлайн-школа</button><button data-n="services" aria-pressed="false">Услуги</button>
+   </div>
+   <label for="d-name">Название компании</label><input id="d-name">
+   <label for="d-prices">Прайс-лист</label><textarea id="d-prices"></textarea>
+   <p class="hint">Каждая позиция с новой строки: «Услуга — цена». Бот будет называть только эти цены.</p>
+   <label for="d-info">Адрес, график, условия</label><textarea id="d-info" style="min-height:70px"></textarea>
+   <button class="btn pri" id="d-start" style="width:100%;margin-top:16px">Начать диалог заново</button>
+  </div>
+  <div style="min-width:0">
+   <div class="chat">
+    <div class="wa-head"><div class="ava" id="d-ava">Ш</div><div><b id="d-title"></b><small id="d-status">ИИ-менеджер · онлайн</small></div></div>
+    <div class="wa-log" id="d-log" aria-live="polite"></div>
+    <div class="quick" id="d-quick"></div>
+    <form class="send" id="d-send"><input id="d-msg" placeholder="Напишите как клиент…" autocomplete="off"><button class="btn pri sm">Отправить</button></form>
+    <p class="note" id="d-note">Демо: до 20 сообщений в диалоге.</p>
+   </div>
+   <div class="card-out" id="d-card" hidden></div>
+  </div>
+ </div>
+ <div class="full"><div><h3>Полная версия тестового кабинета</h3><p class="muted">Импорт прайса из Excel, CRM с карточками лидов и статусами, дашборд таргетированной рекламы с разбором от ИИ.</p></div><a class="btn pri" href="https://claude.ai/artifact/NrDvcp82dbpkuHwQKgiYZN" target="_blank" rel="noopener">Открыть кабинет ALTIM →</a></div>
+</div></section>
+
+<section id="cases"><div class="in">
+ <div class="shead"><span class="eyebrow">Кейсы</span><h2>Результаты, которые можно проверить</h2><p class="lead">Проекты нашей команды в образовании, продажах авто, производстве и услугах. Приводим только цифры, подтверждённые в проектах.</p></div>
+ <div class="cases">
+  <article class="case"><span class="ind">Образование</span><h3>Next Leaders</h3><p>Образовательный центр. Автоматизировали продажи и коммуникацию с клиентами.</p><div class="metrics"><div><b>44%</b><span>конверсия из диалога во встречу</span></div></div><div class="did"><span>ИИ-бот</span><span>Битрикс24</span><span>ИИ-аналитика звонков</span><span>отчёты в Telegram</span></div></article>
+  <article class="case"><span class="ind">Автосалон</span><h3>ElectroHub.kg</h3><p>Каталог автомобилей в чат-боте, обработка обращений и распределение заявок по менеджерам.</p><div class="metrics"><div><b>10 000+</b><span>диалогов обработано</span></div><div><b>500+</b><span>автомобилей продано</span></div></div><div class="did"><span>ИИ-бот</span><span>каталог</span><span>CRM</span><span>распределение заявок</span></div></article>
+  <article class="case"><span class="ind">Производство ЛСТК</span><h3>Стальдвор</h3><p>Чат-бот связан с CRM, автоматизированы документация и операционный отдел.</p><div class="metrics"><div><b>600+</b><span>диалогов обработано ботом</span></div><div><b>130</b><span>клиентов записались на встречу</span></div><div><b>21,7%</b><span>конверсия во встречу</span></div></div><div class="did"><span>ИИ-бот + CRM</span><span>документооборот</span></div></article>
+  <article class="case"><span class="ind">Оборудование для дома</span><h3>Aquaman</h3><p>Продажи систем фильтрации воды. Бот работает с существующей базой клиентов и новыми заявками.</p><div class="metrics"><div><b>22%</b><span>конверсия из диалога во встречу</span></div></div><div class="did"><span>ИИ-бот</span><span>Битрикс24</span><span>работа с базой</span><span>ИИ-аналитика звонков</span></div></article>
+  <article class="case"><span class="ind">Образование за рубежом</span><h3>Nova Consulting</h3><p>Запись на консультацию сама попадает в календарь, руководитель получает отчёт в Telegram.</p><div class="metrics"><div><b>+18%</b><span>к конверсии отдела продаж</span></div></div><div class="did"><span>Битрикс24</span><span>Google Календарь</span><span>отчёты в Telegram</span></div></article>
+  <article class="case"><span class="ind">Онлайн-курсы</span><h3>Apex Academy</h3><p>Курсы по Blender. Оплата проходит без участия менеджера: платёж подтверждается, сделка в amoCRM закрывается сама, ученик получает доступ.</p><div class="did"><span>amoCRM</span><span>онлайн-оплата</span><span>автоматический доступ к курсу</span></div></article>
+ </div>
+ <p class="cases-note">Ещё проекты: Tash Building — коммерческое предложение на домокомплект считается автоматически сразу после заявки.</p>
+</div></section>
+
+<section id="compare"><div class="in">
+ <div class="shead"><span class="eyebrow">Сравнение</span><h2>Чат-бот отвечает. ALTIM продаёт</h2></div>
+ <div class="tbl"><table>
+  <thead><tr><th></th><th class="c us">ALTIM AI</th><th class="c">Обычный чат-бот</th><th class="c">Менеджер на окладе</th></tr></thead>
+  <tbody>
+   <tr><td>Отвечает за секунды, 24/7</td><td class="c us y">да</td><td class="c y">да</td><td class="c n">нет</td></tr>
+   <tr><td>Ведёт по скрипту и отрабатывает возражения</td><td class="c us y">да</td><td class="c n">нет</td><td class="c y">да</td></tr>
+   <tr><td>Называет цены только из вашего прайса</td><td class="c us y">да</td><td class="c p">по кнопкам</td><td class="c p">как помнит</td></tr>
+   <tr><td>Сам создаёт сделку и карточку лида</td><td class="c us y">да</td><td class="c n">нет</td><td class="c p">вручную</td></tr>
+   <tr><td>Разбирает звонки и оценивает качество</td><td class="c us y">да</td><td class="c n">нет</td><td class="c n">нет</td></tr>
+   <tr><td>Русский и казахский в одном диалоге</td><td class="c us y">да</td><td class="c p">редко</td><td class="c p">зависит от сотрудника</td></tr>
+   <tr><td>Работает с amoCRM, Битрикс24 и 1С</td><td class="c us y">да</td><td class="c p">частично</td><td class="c y">да</td></tr>
+  </tbody>
+ </table></div>
+</div></section>
+
+<section id="integrations" style="padding-top:0"><div class="in">
+ <div class="shead"><span class="eyebrow">Интеграции</span><h2>Работаем с системами, которые у вас уже есть</h2></div>
+ <div class="integr"><span><small>партнёр</small>amoCRM</span><span><small>партнёр</small>Битрикс24</span><span>WhatsApp</span><span>Telegram</span><span>Instagram</span><span>1С</span><span>Google Календарь</span><span>Kaspi</span><span>Meta Ads</span><span>LMS</span></div>
+</div></section>
+
+<section id="faq" style="padding-top:24px"><div class="in">
+ <div class="shead"><span class="eyebrow">Вопросы</span><h2>Частые вопросы</h2></div>
+ <div class="faq">
+  <details open><summary>Чем ALTIM AI отличается от обычного чат-бота?</summary><p>Чат-бот отвечает по кнопкам и шаблонам. ALTIM AI ведёт живой диалог: выясняет потребность, предлагает подходящие позиции из прайса, отрабатывает «дорого» и «подумаю», записывает клиента и передаёт отделу продаж карточку с анализом.</p></details>
+  <details><summary>Бот не будет выдумывать цены и скидки?</summary><p>Нет. Бот берёт цены и условия только из вашего прайса и данных компании. Если ответа там нет, он говорит, что уточнит, и передаёт вопрос менеджеру.</p></details>
+  <details><summary>Что происходит после того, как клиент записался?</summary><p>Бот подтверждает услугу, дату, время и адрес и больше не задаёт вопросов. В CRM появляется сделка и карточка лида: потребность, возражения, допродажи и скрипт звонка-подтверждения.</p></details>
+  <details><summary>Можно оставить нашу amoCRM или Битрикс24?</summary><p>Да. Мы официальные партнёры обеих систем и подключаем бота к вашей CRM, а не заставляем переезжать.</p></details>
+  <details><summary>Можно ли отвечать клиентам самому?</summary><p>Да. Менеджер видит все диалоги и может перехватить разговор в любой момент. Сложные вопросы бот сам передаёт человеку.</p></details>
+  <details><summary>На каких языках отвечает бот?</summary><p>На русском и казахском, на языке, на котором пишет клиент.</p></details>
+  <details><summary>Сколько стоит внедрение?</summary><p>Зависит от каналов, объёма диалогов и нужных интеграций. Называем стоимость после разбора вашего процесса.</p></details>
+ </div>
+</div></section>
+
+<section style="padding-top:24px"><div class="in">
+ <div class="final">
+  <div style="display:flex;flex-direction:column;gap:14px"><h2>Покажем, как ИИ-менеджер будет продавать за вас</h2><p class="lead">Напишите, какой процесс хотите автоматизировать. Предложим решение и покажем бота на ваших данных.</p></div>
+  <div class="contact">
+   <span class="eyebrow">WhatsApp</span>
+   <span class="phone" id="phone">+996 705 05 11 10</span>
+   <div class="ctas"><a class="btn pri" href="https://wa.me/996705051110" target="_blank" rel="noopener">Написать в WhatsApp</a><button class="btn" id="copy-phone" type="button">Копировать номер</button></div>
+  </div>
+ </div>
+</div></section>
+</main>
+
+<footer><div class="in">
+ <div><a class="logo" href="#top">ALTIM <span>AI</span></a><p style="margin-top:10px">ИИ-продажи, CRM и автоматизация бизнеса.</p></div>
+ <div>Официальный партнёр amoCRM и Битрикс24<br>© 2026 ALTIM AI</div>
+</div></footer>
+
+<script>
+const $=id=>document.getElementById(id);
+function el(t,p,...c){const e=document.createElement(t);if(p)for(const k in p){const v=p[k];if(v==null||v===false)continue;if(k==="class")e.className=v;else if(k==="text")e.textContent=v;else if(k.startsWith("on"))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v===true?"":String(v))}for(const x of c.flat(9)){if(x==null||x===false)continue;e.append(x.nodeType?x:String(x))}return e}
+function toast(t){const d=el("div",{class:"toast",role:"status",text:t});document.body.append(d);setTimeout(()=>d.remove(),2600)}
+$("copy-phone").onclick=async()=>{try{await navigator.clipboard.writeText("+996705051110");toast("Номер скопирован")}catch{const r=document.createRange();r.selectNodeContents($("phone"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("Номер выделен, скопируйте его")}};
+
+const N={
+clinic:{label:"клиника",goal:"записать пациента на консультацию или диагностику",name:"Клиника «Шипагер»",
+ prices:"Консультация терапевта — 8 000 ₸\nПриём кардиолога — 12 000 ₸\nУЗИ брюшной полости — 9 000 ₸\nЭКГ с расшифровкой — 4 500 ₸\nОбщий анализ крови — 2 500 ₸\nCheck-up «Сердце» — 35 000 ₸ (ЭКГ, УЗИ сердца, анализы, приём кардиолога; рассрочка Kaspi Red)",
+ info:"Астана, пр. Кабанбай батыра 10. Пн–Сб 8:00–20:00. Скидок сейчас нет.",
+ rule:"Не ставь диагнозы и не назначай лечение. При острых симптомах советуй звонить 103.",fields:"услуга, дата и время приёма, имя и телефон",confirm:"подтверди услугу, дату и время, цену и адрес, скажи, что накануне придёт напоминание",
+ q:["Сколько стоит check-up сердца?","Дорого, в другой клинике дешевле","Я подумаю"],qa:["Спасибо!","Как к вам добраться?"]},
+goods:{label:"товары и БАДы",goal:"оформить заказ",name:"Vita Store",
+ prices:"Омега-3, 90 капсул — 7 900 ₸\nВитамин D3 2000 МЕ — 5 500 ₸\nМагний B6 — 4 900 ₸\nНабор «Иммунитет» — 14 900 ₸ (D3, витамин C, цинк)\nДоставка по Астане — 1 000 ₸ (бесплатно от 15 000 ₸)",
+ info:"Доставка по Астане за 1 день, по Казахстану 2–5 дней. Оплата Kaspi или картой.",
+ rule:"Не обещай лечебный эффект: БАД не лекарство.",fields:"товар и количество, адрес доставки, имя и телефон",confirm:"подтверди состав заказа, сумму, адрес и срок доставки",
+ q:["Что посоветуете для иммунитета?","Это вылечит давление?","На маркетплейсе дешевле"],qa:["Спасибо!","Когда привезут?"]},
+school:{label:"онлайн-школа",goal:"записать на бесплатный пробный урок",name:"SkillUp Academy",
+ prices:"Курс SMM, 8 недель — 120 000 ₸\nТаргетированная реклама, 10 недель — 150 000 ₸\nПробный урок — бесплатно\nРассрочка Kaspi — 0% на 12 месяцев",
+ info:"Новый поток 1-го числа каждого месяца. Занятия онлайн, записи остаются навсегда.",
+ rule:"Не гарантируй доход или трудоустройство.",fields:"курс, дата и время пробного урока, имя и телефон",confirm:"подтверди курс, дату и время пробного урока, скажи, что ссылка придёт за час до начала",
+ q:["Подойдёт ли курс новичку?","Гарантируете заработок?","Дорого, подумаю"],qa:["Спасибо!","Что нужно подготовить?"]},
+services:{label:"бытовые услуги",goal:"записать на выезд мастера или замер",name:"Чистый дом",
+ prices:"Генеральная уборка квартиры до 60 м² — 35 000 ₸\nУборка после ремонта — от 600 ₸ за м²\nХимчистка дивана — 15 000 ₸\nМойка окон — 2 500 ₸ за створку\nВыезд за город — 5 000 ₸",
+ info:"Алматы и пригород. Работаем ежедневно 8:00–21:00. Своя химия и оборудование.",
+ rule:"Не обещай точное время окончания работ без осмотра.",fields:"услуга, адрес, дата и время выезда, имя и телефон",confirm:"подтверди услугу, адрес, дату и время и примерную стоимость по прайсу",
+ q:["Сколько стоит уборка трёшки?","А почему так дорого?","Можно сегодня?"],qa:["Спасибо!","Можно перенести?"]}};
+let niche="clinic",SAMPLE=null,chat=null;
+const use=n=>{try{return window.claude?.use?Promise.resolve(window.claude.use(n)).catch(()=>null):Promise.resolve(null)}catch{return Promise.resolve(null)}};
+use("sample").then(s=>{SAMPLE=s;if(!s)$("d-note").textContent="Бот отвечает, когда страница открыта в Claude. На вашем домене он будет работать через ваш сервер.";else $("d-note").textContent="Демо: до 20 сообщений в диалоге."});
+
+function fill(){const c=N[niche];document.querySelectorAll("#niches button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.n===niche)));$("d-name").value=c.name;$("d-prices").value=c.prices;$("d-info").value=c.info;start()}
+document.querySelectorAll("#niches button").forEach(b=>b.onclick=()=>{niche=b.dataset.n;fill()});
+function add(role,text){const d=el("div",{class:"b"+(role==="c"?" c":""),text});$("d-log").append(d);$("d-log").scrollTop=1e9;return d}
+function typing(){const d=el("div",{class:"b"},el("span",{class:"dots"},el("i"),el("i"),el("i")));$("d-log").append(d);$("d-log").scrollTop=1e9;return d}
+function quick(list){$("d-quick").replaceChildren(...list.map(t=>el("button",{type:"button",onclick:()=>ask(t)},t)))}
+function start(){const name=$("d-name").value.trim()||N[niche].name;chat={hist:[],booked:null,count:0,busy:false};$("d-log").replaceChildren();$("d-card").hidden=true;$("d-card").replaceChildren();
+ $("d-title").textContent=name;$("d-ava").textContent=name.replace(/[«»"]/g,"").replace(/^Клиника\s+/i,"").trim().charAt(0).toUpperCase()||"A";$("d-status").textContent="ИИ-менеджер · онлайн";
+ const g=`Здравствуйте! Меня зовут Дана, я менеджер ${name}. Как могу к вам обращаться?`;add("m",g);chat.hist.push(["Менеджер",g]);quick(N[niche].q)}
+$("d-start").onclick=start;
+$("d-send").onsubmit=e=>{e.preventDefault();const t=$("d-msg").value.trim();if(t){$("d-msg").value="";ask(t)}};
+
+function noQ(s){const parts=s.match(/[^.!?…]+(?:[.!?…]+|$)\s*/g)||[s];const out=parts.filter(p=>!p.includes("?")).join("").trim();return /[\p{L}\d]/u.test(out)?out:""}
+function prompt(){const c=N[niche],name=$("d-name").value.trim()||c.name,today=new Date().toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long"});
+ const head=`Ты — Дана, менеджер отдела продаж компании «${name}» (ниша: ${c.label}). Переписка с клиентом в WhatsApp. Сегодня ${today}.
+ДАННЫЕ КОМПАНИИ: ${$("d-info").value.trim()||"не указаны"}
+ПРАЙС-ЛИСТ (единственный источник цен):
+${$("d-prices").value.trim()||"(пуст — цены не называй, предложи уточнить)"}`;
+ const dlg="ДИАЛОГ:\n"+chat.hist.map(h=>h[0]+": "+h[1]).join("\n");
+ const fmt=`ФОРМАТ: только JSON: {"messages":["сообщение","второе (необязательно)"],"booked":${chat.booked?"true":"false"},"booking":{"name":"","phone":"","service":"","datetime":"","price":""}}. Сообщения короткие, как в мессенджере, без markdown и подписи.`;
+ if(chat.booked)return `${head}
+
+КЛИЕНТ УЖЕ ЗАПИСАН: ${chat.booked.service}; ${chat.booked.datetime}. Цель достигнута.
+После записи не задавай никаких вопросов, ни одного вопросительного знака, ничего не предлагай. Отвечай только на то, что написал клиент, 1–2 коротких предложения, утвердительно. Благодарит — тепло попрощайся. Просит перенос — скажи, что передаёшь администратору и он свяжется.
+
+${dlg}
+
+${fmt}`;
+ return `${head}
+
+ЦЕЛЬ: ${c.goal}.
+ЦЕНЫ: называй только цены из прайса, точно как написано. Предлагай 1–2 подходящие позиции. Позиции нет — скажи, что уточнишь у коллег, и предложи ближайшую из прайса. Скидки и рассрочку упоминай, только если они есть в данных.
+СТИЛЬ: как живой опытный менеджер, тепло, на «вы», 2–4 предложения, без списков. Обращайся по имени. Ответь на вопросы клиента и задай ОДИН вопрос, ведущий к записи. Пиши на языке клиента (русский или казахский).
+ЭТАПЫ: имя → ситуация (1–2 вопроса) → 1–2 позиции с ценой и выгодой → возражения → выбор из двух вариантов времени → телефон.
+ВОЗРАЖЕНИЯ: «дорого» — объясни, что входит в цену, предложи вариант дешевле или рассрочку из данных. «Подумаю» — уточни, что смущает, предложи придержать время.
+ЗАПИСЬ: когда известны ${c.fields} — поставь "booked": true и одним сообщением ${c.confirm}, тепло попрощайся. В этом сообщении нет вопросов. Чего-то не хватает — спроси только это.
+РАМКИ: не выдумывай цены, скидки, отзывы и гарантии. ${c.rule} Если спросят, бот ли ты, честно скажи, что ИИ-ассистент.
+
+${dlg}
+
+${fmt}`}
+
+async function ask(t){if(!chat||chat.busy)return;
+ if(!SAMPLE){$("d-note").textContent="Бот отвечает, когда страница открыта в Claude. На вашем домене он будет работать через ваш сервер.";return}
+ if(chat.count>=20){$("d-note").textContent="Лимит демо — 20 сообщений. Нажмите «Начать диалог заново».";return}
+ chat.busy=true;chat.count++;add("c",t);chat.hist.push(["Клиент",t]);const d=typing();const after=!!chat.booked;let r;
+ try{r=await SAMPLE.json(prompt(),{cache:false,modelTier:"default"})}
+ catch(e){if(e&&e.code==="invalid_json"&&e.text){try{const a=e.text.indexOf("{"),z=e.text.lastIndexOf("}");r=JSON.parse(e.text.slice(a,z+1))}catch{r={messages:[e.text]}}}
+  else{d.remove();add("m",e&&e.code==="rate_limited"?"Слишком много сообщений, подождите минуту.":"Не удалось получить ответ. Отправьте сообщение ещё раз.");chat.count--;chat.hist.pop();chat.busy=false;return}}
+ let msgs=(Array.isArray(r?.messages)?r.messages:[String(r?.reply||"")]).map(s=>String(s||"").trim()).filter(Boolean);
+ const b=r&&typeof r.booking==="object"&&r.booking?r.booking:{};
+ const booked=after||(r?.booked===true&&!!(b.name||b.phone)&&!!(b.datetime||b.service));
+ if(booked){msgs=msgs.map(noQ).filter(Boolean);if(!msgs.length)msgs=["Всё записано, ждём вас!"]}
+ if(!msgs.length)msgs=["Секунду, уточню и вернусь с ответом."];
+ chat.hist.push(["Менеджер",msgs.join(" ")]);
+ await new Promise(z=>setTimeout(z,350+Math.min(msgs[0].length*12,1600)));d.replaceWith(add("m",msgs[0]));
+ for(const m of msgs.slice(1)){const d2=typing();await new Promise(z=>setTimeout(z,500+Math.min(m.length*12,1600)));d2.replaceWith(add("m",m))}
+ if(!after&&booked){chat.booked={name:String(b.name||""),phone:String(b.phone||""),service:String(b.service||""),datetime:String(b.datetime||""),price:String(b.price||"")};
+  $("d-status").textContent="Клиент записан";quick(N[niche].qa);
+  $("d-log").append(el("div",{class:"sys"},el("b",{text:"Клиент записан. ИИ собирает карточку лида…"})));$("d-log").scrollTop=1e9;leadCard()}
+ chat.busy=false}
+
+async function leadCard(){const box=$("d-card");box.hidden=false;box.replaceChildren(el("div",{class:"box"},el("b",{text:"Карточка лида готовится…"}),el("span",{class:"muted",text:"ИИ разбирает переписку: потребность, возражения, допродажи."})));
+ const bk=chat.booked;const conv=chat.hist.map(h=>h[0]+": "+h[1]).join("\n");
+ try{const a=await SAMPLE.json(`Ты — руководитель отдела продаж. Составь карточку лида по переписке для менеджеров, которые будут вести клиента дальше. Опирайся только на переписку и прайс, не выдумывай. Допродажи — только из прайса, с ценами.
+ПРАЙС:
+${$("d-prices").value}
+ЗАПИСЬ: ${bk.service}; ${bk.datetime}; ${bk.name} ${bk.phone}
+ПЕРЕПИСКА:
+${conv}
+Верни JSON: {"temperature":"горячий|тёплый|холодный","score":0,"summary":"2 предложения","need":"главный запрос","objections":[{"text":"","status":"снято|частично|не снято"}],"upsell":[{"item":"","price":""}],"nextSteps":[""],"callScript":"3–4 предложения"}. score — вероятность оплаты 0–100.`,{modelTier:"default"});
+  const score=Math.max(0,Math.min(100,Math.round(Number(a.score)||0)));
+  const li=(arr,f)=>Array.isArray(arr)&&arr.length?el("ul",null,arr.map(x=>el("li",{text:f(x)}))):el("span",{class:"muted",text:"не выяснено"});
+  box.replaceChildren(
+   el("div",{class:"box"},el("div",{style:"display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"},el("span",{class:"tagline",text:"Карточка лида · создана ИИ"}),el("span",{class:"chip hot",text:(a.temperature||"тёплый")+" · "+score+"%"})),
+    el("h3",{text:[bk.name,bk.service].filter(Boolean).join(" · ")}),el("span",{class:"muted num",text:[bk.datetime,bk.price,bk.phone].filter(Boolean).join(" · ")}),el("div",{class:"meter"},el("i",{style:`width:${score}%`})),el("p",{text:a.summary||""})),
+   el("div",{class:"grid2"},
+    el("div",{class:"box"},el("span",{class:"tagline",text:"Потребность"}),el("p",{text:a.need||"не выяснено"}),el("span",{class:"tagline",text:"Возражения"}),li(a.objections,o=>`«${o.text||""}» — ${o.status||""}`)),
+    el("div",{class:"box"},el("span",{class:"tagline",text:"Допродажи из прайса"}),li(a.upsell,u=>`${u.item||""}${u.price?" — "+u.price:""}`),el("span",{class:"tagline",text:"Следующие шаги"}),li(a.nextSteps,s=>String(s)))),
+   el("div",{class:"box"},el("span",{class:"tagline",text:"Скрипт звонка-подтверждения"}),el("p",{text:a.callScript||""})))}
+ catch(e){box.replaceChildren(el("div",{class:"box"},el("b",{text:"Не удалось собрать карточку."}),el("span",{class:"muted",text:"Запишитесь в диалоге ещё раз или откройте полную версию кабинета."})))}}
+fill();
+</script>
